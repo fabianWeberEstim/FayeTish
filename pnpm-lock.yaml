@@ -195,9 +195,9 @@ importers:
       '@elizaos/plugin-intiface':
         specifier: workspace:*
         version: link:../packages/plugin-intiface
-      '@elizaos/plugin-matchmaker':
+      '@elizaos/plugin-faytish':
         specifier: workspace:*
-        version: link:../packages/plugin-matchmaker
+        version: link:../packages/plugin-faytish
       '@elizaos/plugin-multiversx':
         specifier: workspace:*
         version: link:../packages/plugin-multiversx
@@ -1368,7 +1368,7 @@ importers:
         specifier: 7.1.0
         version: 7.1.0
 
-  packages/plugin-matchmaker:
+  packages/plugin-faytish:
     dependencies:
       '@elizaos/core':
         specifier: workspace:*
