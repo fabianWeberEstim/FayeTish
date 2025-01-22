@@ -32,7 +32,7 @@ import {
 } from "@elizaos/core";
 //import { RedisClient } from "@elizaos/adapter-redis";
 //import { zgPlugin } from "@elizaos/plugin-0g";
-//import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import { faytishPlugin } from "@elizaos/plugin-faytish";
 //import createGoatPlugin from "@elizaos/plugin-goat";
 // import { intifacePlugin } from "@elizaos/plugin-intiface";
@@ -536,7 +536,7 @@ export async function createAgent(
         evaluators: [],
         character,
         // character.plugins are handled when clients are added
-        plugins: [faytishPlugin,twitterPlugin].filter(Boolean),
+        plugins: [bootstrapPlugin,faytishPlugin,twitterPlugin].filter(Boolean),
         providers: [],
         actions: [],
         services: [],
