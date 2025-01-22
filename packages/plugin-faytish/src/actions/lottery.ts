@@ -5,7 +5,7 @@ import {
     ActionExample,
     elizaLogger
 } from "@elizaos/core";
-import { FootSubmission, ExtendedRuntime, ChallengePost } from "../types";
+import { FootSubmission, ChallengePost, RuntimeWithTwitter } from "../types";
 
 export const lotteryAction: Action = {
     name: "RUN_LOTTERY",
@@ -36,7 +36,12 @@ export const lotteryAction: Action = {
 
     handler: async (runtime: IAgentRuntime): Promise<void> => {
         try {
-            const extendedRuntime = runtime as ExtendedRuntime;
+            const runtimeWithTwitter = runtime as RuntimeWithTwitter;
+            if (!runtimeWithTwitter.twitterClient) {
+                elizaLogger.error("Twitter client not available");
+                return;
+            }
+
             const lastPost = await runtime.cacheManager.get<ChallengePost>("last_challenge_post");
             if (!lastPost) return;
 
@@ -55,7 +60,7 @@ export const lotteryAction: Action = {
             const replyText = `🎉 Congratulations @${winner.displayName}!\n\nYou're today's winner! DM your wallet address to receive tokens! 🎁\n\n#FootChallenge #Winner`;
 
             elizaLogger.debug(`Selected winner: ${winner.displayName}`);
-            await extendedRuntime.twitterClient.reply(replyText, winner.tweetId);
+            await runtimeWithTwitter.twitterClient.reply(replyText, winner.tweetId);
 
             // Clear the active submissions after selecting winner
             await runtime.cacheManager.set('active_foot_submissions', []);

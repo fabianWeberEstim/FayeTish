@@ -5,7 +5,7 @@ import {
     ActionExample,
     elizaLogger
 } from "@elizaos/core";
-import { ChallengePost, ExtendedRuntime } from "../types";
+import { ChallengePost, RuntimeWithTwitter } from "../types";
 
 export const postChallengeAction: Action = {
     name: "POST_CHALLENGE",
@@ -27,13 +27,19 @@ export const postChallengeAction: Action = {
         }
     },
 
+
     handler: async (runtime: IAgentRuntime): Promise<void> => {
         try {
-            const extendedRuntime = runtime as ExtendedRuntime;
+            const runtimeWithTwitter = runtime as RuntimeWithTwitter;
+            if (!runtimeWithTwitter.twitterClient) {
+                elizaLogger.error("Twitter client not available");
+                return;
+            }
+
             const challengeText = "🦶 Daily Foot Challenge!\n\nReply with a photo of your feet for a chance to win tokens! 🎉\n\n#FootChallenge #CryptoGiveaway";
 
             elizaLogger.debug("Posting new challenge tweet");
-            const tweet = await extendedRuntime.twitterClient.tweet(challengeText);
+            const tweet = await runtimeWithTwitter.twitterClient.tweet(challengeText);
 
             const newPost: ChallengePost = {
                 timestamp: Date.now(),
@@ -41,8 +47,6 @@ export const postChallengeAction: Action = {
             };
 
             await runtime.cacheManager.set("last_challenge_post", newPost);
-
-            // Reset active submissions list
             await runtime.cacheManager.set('active_foot_submissions', []);
 
             elizaLogger.debug(`Challenge post created with ID: ${tweet.id}`);

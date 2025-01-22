@@ -115,7 +115,7 @@ export const footImageEvaluator: Evaluator = {
             }
 
             // Check submission cooldown
-            const lastSubmission = await runtime.cacheManager.get(
+            const lastSubmission = await runtime.cacheManager.get<FootSubmission>(
                 `foot_submissions:${message.userId}:last_submission`
             );
 
