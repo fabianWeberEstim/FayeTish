@@ -115,12 +115,13 @@ export const footImageEvaluator: Evaluator = {
             }
 
             // Check submission cooldown
-            const lastSubmission = await runtime.cacheManager.get(
+            const lastSubmission = await runtime.cacheManager.get<FootSubmission>(
                 `foot_submissions:${message.userId}:last_submission`
             );
 
             if (lastSubmission) {
-                const hoursSinceLastSubmission = (Date.now() - lastSubmission.timestamp) / (1000 * 60 * 60);
+                const typedLastSubmission = lastSubmission as FootSubmission;
+                const hoursSinceLastSubmission = (Date.now() - typedLastSubmission.timestamp) / (1000 * 60 * 60);
                 if (hoursSinceLastSubmission < 24) {
                     elizaLogger.debug(`User ${message.userId} attempted submission before 24h cooldown`);
                     return false;
