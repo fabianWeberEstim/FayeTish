@@ -8,6 +8,7 @@ import {
     elizaLogger,
     composeContext
 } from "@elizaos/core";
+import { FootSubmission } from "../types";
 
 const footAnalysisTemplate = `
 TASK: Analyze foot image for authenticity and compliance.
@@ -133,81 +134,26 @@ export const footImageEvaluator: Evaluator = {
         }
     },
 
-    handler: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<boolean> => {
+    handler: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
         try {
-            const imageUrl = message.content.media[0];
-
-            // Prepare state for analysis
-            const analysisState: State = {
-                imageUrl,
-                senderName: message.userId,
-                agentName: runtime.character.name,
-                roomId: message.roomId
+            const submission: FootSubmission = {
+                userId: message.userId,
+                displayName: message.displayName || message.userId,
+                tweetId: message.id,
+                imageUrl: message.content.media[0],
+                timestamp: Date.now()
             };
 
-            const context = composeContext({
-                template: footAnalysisTemplate,
-                state: analysisState
-            });
+            // Get current submissions
+            const submissions = await runtime.cacheManager.get<FootSubmission[]>('active_foot_submissions') || [];
 
-            elizaLogger.info("=== FootImageEvaluator Started ===");
-            elizaLogger.info("Analyzing image:", imageUrl);
+            // Add new submission
+            submissions.push(submission);
 
-            const results = await generateObjectArray({
-                runtime,
-                context,
-                modelClass: ModelClass.LARGE
-            });
+            // Store updated list
+            await runtime.cacheManager.set('active_foot_submissions', submissions);
 
-            if (!results?.length) {
-                elizaLogger.warn("FootImageEvaluator: No analysis results");
-                return false;
-            }
-
-            const analysis = results[0] as FootAnalysis;
-            elizaLogger.info("Analysis Results:", JSON.stringify(analysis, null, 2));
-
-            // Validate analysis results
-            if (!isValidAnalysis(analysis)) {
-                elizaLogger.warn("Invalid foot image analysis results");
-                return false;
-            }
-
-            // Store submission data
-            await runtime.cacheManager.set(
-                `foot_submissions:${message.userId}:last_submission`,
-                {
-                    timestamp: Date.now(),
-                    imageUrl,
-                    tweetId: message.id,
-                    userId: message.userId,
-                    username: message.username,
-                    analysis
-                },
-                24 * 60 * 60 // TTL: 24 hours
-            );
-
-            // Add to active submissions if valid
-            if (analysis.authentication.isRealFootPhoto &&
-                analysis.authentication.isHumanFoot &&
-                analysis.authentication.isAppropriate) {
-
-                await runtime.cacheManager.set(
-                    'active_foot_submissions',
-                    {
-                        userId: message.userId,
-                        username: message.username,
-                        tweetId: message.id,
-                        imageUrl,
-                        timestamp: Date.now(),
-                        analysis
-                    }
-                );
-            }
-
-            elizaLogger.info("=== FootImageEvaluator Completed ===");
             return true;
-
         } catch (error) {
             elizaLogger.error("Error in footImageEvaluator handler:", error);
             return false;

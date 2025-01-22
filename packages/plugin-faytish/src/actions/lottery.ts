@@ -5,6 +5,7 @@ import {
     ActionExample,
     elizaLogger
 } from "@elizaos/core";
+import { FootSubmission, ExtendedRuntime, ChallengePost } from "../types";
 
 export const lotteryAction: Action = {
     name: "RUN_LOTTERY",
@@ -13,14 +14,14 @@ export const lotteryAction: Action = {
 
     validate: async (runtime: IAgentRuntime): Promise<boolean> => {
         try {
-            const lastPost = await runtime.cacheManager.get("last_challenge_post");
+            const lastPost = await runtime.cacheManager.get<ChallengePost>("last_challenge_post");
             if (!lastPost) {
                 elizaLogger.debug("No previous challenge post found");
                 return false;
             }
 
             // Get all submissions from the active submissions list
-            const submissions = await runtime.cacheManager.lrange('active_foot_submissions', 0, -1);
+            const submissions = await runtime.cacheManager.get<FootSubmission[]>('active_foot_submissions') || [];
 
             // Filter submissions after last post
             const validSubmissions = submissions.filter(sub => sub.timestamp > lastPost.timestamp);
@@ -35,11 +36,12 @@ export const lotteryAction: Action = {
 
     handler: async (runtime: IAgentRuntime): Promise<void> => {
         try {
-            const lastPost = await runtime.cacheManager.get("last_challenge_post");
+            const extendedRuntime = runtime as ExtendedRuntime;
+            const lastPost = await runtime.cacheManager.get<ChallengePost>("last_challenge_post");
             if (!lastPost) return;
 
             // Get all submissions and filter by timestamp
-            const submissions = await runtime.cacheManager.get('active_foot_submissions');
+            const submissions = await runtime.cacheManager.get<FootSubmission[]>('active_foot_submissions') || [];
             const validSubmissions = submissions.filter(sub => sub.timestamp > lastPost.timestamp);
 
             if (validSubmissions.length === 0) {
@@ -50,13 +52,13 @@ export const lotteryAction: Action = {
             // Select random winner
             const winner = validSubmissions[Math.floor(Math.random() * validSubmissions.length)];
 
-            const replyText = `🎉 Congratulations @${winner.username}!\n\nYou're today's winner! DM your wallet address to receive tokens! 🎁\n\n#FootChallenge #Winner`;
+            const replyText = `🎉 Congratulations @${winner.displayName}!\n\nYou're today's winner! DM your wallet address to receive tokens! 🎁\n\n#FootChallenge #Winner`;
 
-            elizaLogger.debug(`Selected winner: ${winner.username}`);
-            await runtime.twitterClient.reply(replyText, winner.tweetId);
+            elizaLogger.debug(`Selected winner: ${winner.displayName}`);
+            await extendedRuntime.twitterClient.reply(replyText, winner.tweetId);
 
             // Clear the active submissions after selecting winner
-            await runtime.cacheManager.del('active_foot_submissions');
+            await runtime.cacheManager.set('active_foot_submissions', []);
 
         } catch (error) {
             elizaLogger.error("Error running lottery:", error);

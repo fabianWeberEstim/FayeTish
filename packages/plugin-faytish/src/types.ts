@@ -124,7 +124,7 @@ export interface MatchHistory {
 
 export interface FootSubmission {
     userId: string;
-    username: string;
+    displayName: string;
     tweetId: string;
     imageUrl: string;
     timestamp: number;
@@ -135,7 +135,9 @@ export interface ChallengePost {
     timestamp: number;
 }
 
-export interface FootImageContent extends Content {
-    imageUrl: string;
-    isValid: boolean;
+export interface ExtendedRuntime {
+    twitterClient: {
+        tweet: (text: string) => Promise<{ id: string }>;
+        reply: (text: string, replyToId: string) => Promise<void>;
+    };
 }

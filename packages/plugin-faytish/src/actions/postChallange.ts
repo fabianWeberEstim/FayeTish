@@ -2,12 +2,10 @@ import {
     Action,
     IAgentRuntime,
     Memory,
-    elizaLogger,
     ActionExample,
-    Content
+    elizaLogger
 } from "@elizaos/core";
-
-import { ChallengePost, FootSubmission } from "../types";
+import { ChallengePost, ExtendedRuntime } from "../types";
 
 export const postChallengeAction: Action = {
     name: "POST_CHALLENGE",
@@ -16,7 +14,7 @@ export const postChallengeAction: Action = {
 
     validate: async (runtime: IAgentRuntime): Promise<boolean> => {
         try {
-            const lastPost = await runtime.cacheManager.get("last_challenge_post");
+            const lastPost = await runtime.cacheManager.get<ChallengePost>("last_challenge_post");
             if (lastPost) {
                 const hoursSinceLastPost = (Date.now() - lastPost.timestamp) / (1000 * 60 * 60);
                 elizaLogger.debug(`Hours since last challenge post: ${hoursSinceLastPost}`);
@@ -31,15 +29,21 @@ export const postChallengeAction: Action = {
 
     handler: async (runtime: IAgentRuntime): Promise<void> => {
         try {
+            const extendedRuntime = runtime as ExtendedRuntime;
             const challengeText = "🦶 Daily Foot Challenge!\n\nReply with a photo of your feet for a chance to win tokens! 🎉\n\n#FootChallenge #CryptoGiveaway";
 
             elizaLogger.debug("Posting new challenge tweet");
-            const tweet = await runtime.twitterClient.tweet(challengeText);
+            const tweet = await extendedRuntime.twitterClient.tweet(challengeText);
 
-            await runtime.cacheManager.set("last_challenge_post", {
+            const newPost: ChallengePost = {
                 timestamp: Date.now(),
                 tweetId: tweet.id
-            });
+            };
+
+            await runtime.cacheManager.set("last_challenge_post", newPost);
+
+            // Reset active submissions list
+            await runtime.cacheManager.set('active_foot_submissions', []);
 
             elizaLogger.debug(`Challenge post created with ID: ${tweet.id}`);
         } catch (error) {
