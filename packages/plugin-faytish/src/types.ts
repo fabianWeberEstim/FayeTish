@@ -1,3 +1,5 @@
+import { Content } from "@elizaos/core";
+
 export interface ProfessionalContext {
     role: string | null;
     industry: string | null;
@@ -118,4 +120,22 @@ export interface MatchRecord {
 export interface MatchHistory {
     matches: MatchRecord[];
     lastUpdated: number;
+}
+
+export interface FootSubmission {
+    userId: string;
+    username: string;
+    tweetId: string;
+    imageUrl: string;
+    timestamp: number;
+}
+
+export interface ChallengePost {
+    tweetId: string;
+    timestamp: number;
+}
+
+export interface FootImageContent extends Content {
+    imageUrl: string;
+    isValid: boolean;
 }
