@@ -8,7 +8,7 @@ import {
     elizaLogger,
     composeContext
 } from "@elizaos/core";
-import { FootSubmission } from "../types";
+import { FootSubmission, ExtendedMemory } from "../types";
 
 const footAnalysisTemplate = `
 TASK: Analyze foot image for authenticity and compliance.
@@ -115,7 +115,7 @@ export const footImageEvaluator: Evaluator = {
             }
 
             // Check submission cooldown
-            const lastSubmission = await runtime.cacheManager.get<FootSubmission>(
+            const lastSubmission = await runtime.cacheManager.get(
                 `foot_submissions:${message.userId}:last_submission`
             );
 
@@ -136,9 +136,10 @@ export const footImageEvaluator: Evaluator = {
 
     handler: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
         try {
+            const extendedMessage = message as ExtendedMemory;
             const submission: FootSubmission = {
                 userId: message.userId,
-                displayName: message.displayName || message.userId,
+                displayName: extendedMessage.displayName || message.userId,
                 tweetId: message.id,
                 imageUrl: message.content.media[0],
                 timestamp: Date.now()

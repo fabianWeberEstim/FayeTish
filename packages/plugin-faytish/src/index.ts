@@ -2,7 +2,7 @@ import { Plugin } from "@elizaos/core";
 import { postChallengeAction } from "./actions/postChallenge";
 import { lotteryAction } from "./actions/lottery";
 import { footImageEvaluator } from "./evaluators/footImageEvaluator";
-import { userSubmissionProvider } from "./providers/userSubmissionProvider";
+import { userSubmissionProvider } from "./providers/userProfileStatusProvider";
 
 export * from "./types";
 export * as actions from "./actions";
