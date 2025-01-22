@@ -16,7 +16,7 @@ export const postChallengeAction: Action = {
 
     validate: async (runtime: IAgentRuntime): Promise<boolean> => {
         try {
-            const lastPost = await runtime.databaseAdapter.get("last_challenge_post");
+            const lastPost = await runtime.cacheManager.get("last_challenge_post");
             if (lastPost) {
                 const hoursSinceLastPost = (Date.now() - lastPost.timestamp) / (1000 * 60 * 60);
                 elizaLogger.debug(`Hours since last challenge post: ${hoursSinceLastPost}`);
@@ -36,7 +36,7 @@ export const postChallengeAction: Action = {
             elizaLogger.debug("Posting new challenge tweet");
             const tweet = await runtime.twitterClient.tweet(challengeText);
 
-            await runtime.databaseAdapter.set("last_challenge_post", {
+            await runtime.cacheManager.set("last_challenge_post", {
                 timestamp: Date.now(),
                 tweetId: tweet.id
             });

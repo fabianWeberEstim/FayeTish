@@ -14,7 +14,7 @@ export const userSubmissionProvider: Provider = {
         state?: State
     ): Promise<FootSubmission | null> => {
         try {
-            const submission = await runtime.databaseAdapter.get(
+            const submission = await runtime.cacheManager.get(
                 `foot_submissions/${message.userId}/last_submission`
             );
 
