@@ -7,6 +7,7 @@ import { AutoClientInterface } from "@elizaos/client-auto";
 //import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { dkgPlugin } from "@elizaos/plugin-dkg";
+import { twitterPlugin } from "@elizaos/plugin-twitter";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 import {
     AgentRuntime,
@@ -535,7 +536,7 @@ export async function createAgent(
         evaluators: [],
         character,
         // character.plugins are handled when clients are added
-        plugins: [faytishPlugin].filter(Boolean),
+        plugins: [faytishPlugin,twitterPlugin].filter(Boolean),
         providers: [],
         actions: [],
         services: [],
