@@ -536,7 +536,7 @@ export async function createAgent(
         evaluators: [],
         character,
         // character.plugins are handled when clients are added
-        plugins: [bootstrapPlugin,faytishPlugin,twitterPlugin].filter(Boolean),
+        plugins: [bootstrapPlugin, nodePlugin].filter(Boolean),
         providers: [],
         actions: [],
         services: [],
