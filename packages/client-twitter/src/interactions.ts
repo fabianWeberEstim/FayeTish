@@ -299,7 +299,7 @@ export class TwitterInteractionClient {
 
     private async handleDirectMessages() {
         try {
-            elizaLogger.debug("=== Checking Direct Messages ===");
+            elizaLogger.log("=== Checking Direct Messages ===");
 
             // دریافت دایرکت مسیج‌های جدید
             const messages = await this.client.getMs();
@@ -353,7 +353,7 @@ export class TwitterInteractionClient {
                     `processed_dm_${dm.id}`,
                     true
                 );
-                elizaLogger.debug(`Processed DM ${dm.id}`);
+                elizaLogger.log(`Processed DM ${dm.id}`);
             }
         } catch (error) {
             elizaLogger.error("Error handling direct messages:", error);

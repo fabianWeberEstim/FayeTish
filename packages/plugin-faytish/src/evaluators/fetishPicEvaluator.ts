@@ -5,7 +5,7 @@ import {
     ModelClass,
     generateObjectArray,
     elizaLogger,
-    composeContext
+    composeContext,
 } from "@elizaos/core";
 import { FootSubmission, FetishRequest, ExtendedMemory } from "../types";
 
@@ -100,21 +100,27 @@ interface ImageAnalysis {
 
 function isValidSubmission(analysis: ImageAnalysis): boolean {
     // چک کردن اعتبار محتوا
-    if (!analysis.contentValidation.matchesRequest ||
+    if (
+        !analysis.contentValidation.matchesRequest ||
         !analysis.contentValidation.isValidType ||
-        !analysis.contentValidation.isAppropriate) {
+        !analysis.contentValidation.isAppropriate
+    ) {
         return false;
     }
 
     // چک کردن تطابق با درخواست
-    if (!analysis.requestCompliance.meetsRequirements ||
-        !analysis.requestCompliance.hasRequiredElements) {
+    if (
+        !analysis.requestCompliance.meetsRequirements ||
+        !analysis.requestCompliance.hasRequiredElements
+    ) {
         return false;
     }
 
     // چک کردن اعتبار فنی
-    if (!analysis.technicalVerification.isAuthentic ||
-        !analysis.technicalVerification.meetsQualityStandards) {
+    if (
+        !analysis.technicalVerification.isAuthentic ||
+        !analysis.technicalVerification.meetsQualityStandards
+    ) {
         return false;
     }
 
@@ -132,7 +138,10 @@ export const fetishPicEvaluator: Evaluator = {
     description: "Evaluates submission pictures for fetish requests",
     similes: ["CHECK_SUBMISSION", "VALIDATE_SUBMISSION"],
 
-    validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
+    validate: async (
+        runtime: IAgentRuntime,
+        message: Memory
+    ): Promise<boolean> => {
         try {
             // چک کردن وجود تصویر در پیام
             if (!message.content.media?.length) {
@@ -144,30 +153,47 @@ export const fetishPicEvaluator: Evaluator = {
                 return false;
             }
 
-            const requests = await runtime.cacheManager.get<FetishRequest[]>("valid_fetish_requests") || [];
-            const request = requests.find(req => req.postId === message.content.inReplyTo);
+            const requests =
+                (await runtime.cacheManager.get<FetishRequest[]>(
+                    "valid_fetish_requests"
+                )) || [];
+            const request = requests.find(
+                (req) => req.postId === message.content.inReplyTo
+            );
 
             if (!request || request.winnerSelected) {
                 return false;
             }
 
             // چک کردن اینکه کاربر قبلاً برای این درخواست شرکت نکرده باشد
-            const submissions = await runtime.cacheManager.get<Record<string, FootSubmission[]>>('submissions_by_request') || {};
+            const submissions =
+                (await runtime.cacheManager.get<
+                    Record<string, FootSubmission[]>
+                >("submissions_by_request")) || {};
             const requestSubmissions = submissions[request.id] || [];
 
-            return !requestSubmissions.some(sub => sub.userId === message.userId);
-
+            return !requestSubmissions.some(
+                (sub) => sub.userId === message.userId
+            );
         } catch (error) {
             elizaLogger.error("Error in fetishPicEvaluator validate:", error);
             return false;
         }
     },
 
-    handler: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory
+    ): Promise<boolean> => {
         try {
             const extendedMessage = message as ExtendedMemory;
-            const requests = await runtime.cacheManager.get<FetishRequest[]>("valid_fetish_requests") || [];
-            const request = requests.find(req => req.postId === message.content.inReplyTo);
+            const requests =
+                (await runtime.cacheManager.get<FetishRequest[]>(
+                    "valid_fetish_requests"
+                )) || [];
+            const request = requests.find(
+                (req) => req.postId === message.content.inReplyTo
+            );
 
             if (!request) return false;
 
@@ -176,18 +202,21 @@ export const fetishPicEvaluator: Evaluator = {
                 template: imageAnalysisTemplate,
                 params: {
                     request: request.request,
-                    imageUrl: message.content.media[0]
-                }
+                    imageUrl: message.content.media[0],
+                },
             });
 
             const analysisResult = await generateObjectArray<ImageAnalysis>({
                 context,
                 modelClass: ModelClass.LARGE,
-                runtime
+                runtime,
             });
 
-            if (!analysisResult.length || !isValidSubmission(analysisResult[0])) {
-                elizaLogger.debug("Submission failed validation checks");
+            if (
+                !analysisResult.length ||
+                !isValidSubmission(analysisResult[0])
+            ) {
+                elizaLogger.log("Submission failed validation checks");
                 return false;
             }
 
@@ -197,22 +226,28 @@ export const fetishPicEvaluator: Evaluator = {
                 tweetId: message.id,
                 imageUrl: message.content.media[0],
                 timestamp: Date.now(),
-                requestId: request.id
+                requestId: request.id,
             };
 
             // ذخیره شرکت‌کننده جدید
-            const submissions = await runtime.cacheManager.get<Record<string, FootSubmission[]>>('submissions_by_request') || {};
+            const submissions =
+                (await runtime.cacheManager.get<
+                    Record<string, FootSubmission[]>
+                >("submissions_by_request")) || {};
             if (!submissions[request.id]) {
                 submissions[request.id] = [];
             }
             submissions[request.id].push(submission);
 
-            await runtime.cacheManager.set('submissions_by_request', submissions);
+            await runtime.cacheManager.set(
+                "submissions_by_request",
+                submissions
+            );
 
             return true;
         } catch (error) {
             elizaLogger.error("Error in fetishPicEvaluator handler:", error);
             return false;
         }
-    }
+    },
 };

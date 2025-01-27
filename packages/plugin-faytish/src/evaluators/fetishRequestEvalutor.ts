@@ -11,14 +11,11 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         try {
-            elizaLogger.debug("=== Twitter DM Validation Start ===");
-            elizaLogger.debug(
-                "Full message:",
-                JSON.stringify(message, null, 2)
-            );
-            elizaLogger.debug("Message source:", message.source);
-            elizaLogger.debug("Message type:", message.content.type);
-            elizaLogger.debug("Is DM:", message.content.isDM);
+            elizaLogger.log("=== Twitter DM Validation Start ===");
+            elizaLogger.log("Full message:", JSON.stringify(message, null, 2));
+            elizaLogger.log("Message source:", message.source);
+            elizaLogger.log("Message type:", message.content.type);
+            elizaLogger.log("Is DM:", message.content.isDM);
 
             // بررسی دقیق‌تر نوع پیام
             if (
@@ -26,11 +23,11 @@ export const fetishRequestEvaluator: Evaluator = {
                 message.content.isDM ||
                 message.content.type === "dm"
             ) {
-                elizaLogger.debug("✅ پیام به عنوان DM توییتر تایید شد");
+                elizaLogger.log("✅ پیام به عنوان DM توییتر تایید شد");
                 return true;
             }
 
-            elizaLogger.debug("❌ پیام DM توییتر نیست");
+            elizaLogger.log("❌ پیام DM توییتر نیست");
             return false;
         } catch (error) {
             elizaLogger.error("خطا در اعتبارسنجی:", error);
@@ -44,7 +41,7 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         try {
-            elizaLogger.debug("=== شروع پردازش DM توییتر ===");
+            elizaLogger.log("=== شروع پردازش DM توییتر ===");
             const runtimeWithTwitter = runtime as RuntimeWithTwitter;
 
             if (!runtimeWithTwitter.twitterClient) {
@@ -52,7 +49,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            elizaLogger.debug("✅ پردازش پیام DM:", message.content.text);
+            elizaLogger.log("✅ پردازش پیام DM:", message.content.text);
 
             // ارسال پاسخ به کاربر
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
@@ -60,7 +57,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 "✅ پیام شما دریافت شد! در حال پردازش درخواست شما هستم..."
             );
 
-            elizaLogger.debug("✅ پاسخ DM با موفقیت ارسال شد");
+            elizaLogger.log("✅ پاسخ DM با موفقیت ارسال شد");
             return true;
         } catch (error) {
             elizaLogger.error("خطا در پردازش DM:", error);
