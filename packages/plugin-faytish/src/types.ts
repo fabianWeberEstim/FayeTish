@@ -19,6 +19,8 @@ export type Memory = BaseMemory & {
     displayName?: string;
     id?: `${string}-${string}-${string}-${string}-${string}`;
     content: Content;
+    conversationId: string;
+    senderScreenName?: string;
 };
 
 export interface FootSubmission {

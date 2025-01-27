@@ -369,7 +369,7 @@ export class TwitterInteractionClient {
             elizaLogger.log("Message:", JSON.stringify(message, null, 2));
 
             const jvb = await this.client.twitterClient.sendDirectMessage(
-                message.content.conversationId,
+                message.conversationId,
                 message.content.text
             );
 

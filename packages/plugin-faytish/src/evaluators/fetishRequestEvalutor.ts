@@ -119,7 +119,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
             // استفاده مستقیم از sendDirectMessage
             await runtime.twitterClient.sendDirectMessage(
-                message.content.conversationId,
+                message.conversationId,
                 `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
             );
 
@@ -129,7 +129,7 @@ export const fetishRequestEvaluator: Evaluator = {
             elizaLogger.error("Error processing request:", error);
             try {
                 await runtime.twitterClient.sendDirectMessage(
-                    message.content.conversationId,
+                    message.conversationId,
                     "❌ An error occurred. Please try again with format: request: [your request]"
                 );
             } catch (sendError) {
