@@ -12,25 +12,19 @@ export const fetishRequestEvaluator: Evaluator = {
     ): Promise<boolean> => {
         try {
             elizaLogger.debug("=== Twitter DM Validation Start ===");
-            elizaLogger.debug(
-                "Full message object:",
-                JSON.stringify(message, null, 2)
-            );
-            elizaLogger.debug("Message content:", message.content);
             elizaLogger.debug("Message source:", message.source);
             elizaLogger.debug("Message type:", message.content.type);
             elizaLogger.debug("Is DM:", message.content.isDM);
 
-            if (message.content.isDM || message.source === "twitter_dm") {
-                elizaLogger.debug("✅ Message validated as Twitter DM");
+            if (message.source === "twitter_dm" || message.content.isDM) {
+                elizaLogger.debug("✅ پیام از دایرکت مسیج توییتر تایید شد");
                 return true;
             }
 
-            elizaLogger.debug("❌ Message is not from Twitter DM");
+            elizaLogger.debug("❌ پیام از دایرکت مسیج توییتر نیست");
             return false;
         } catch (error) {
-            elizaLogger.error("Error in validate:", error);
-            elizaLogger.error("Error details:", JSON.stringify(error, null, 2));
+            elizaLogger.error("خطا در اعتبارسنجی:", error);
             return false;
         }
     },
@@ -40,27 +34,21 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         try {
-            elizaLogger.debug("=== Twitter DM Handler Start ===");
             const runtimeWithTwitter = runtime as RuntimeWithTwitter;
 
             if (!runtimeWithTwitter.twitterClient) {
-                elizaLogger.error("❌ Twitter client not available");
+                elizaLogger.error("کلاینت توییتر در دسترس نیست");
                 return false;
             }
 
-            elizaLogger.debug("Twitter client available ✅");
-            elizaLogger.debug("Processing message:", message.content.text);
-
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
                 message.userId,
-                "✅ I received your message! Processing your request..."
+                "✅ درخواست شما دریافت شد! در حال پردازش..."
             );
 
-            elizaLogger.debug("✅ Response DM sent successfully");
             return true;
         } catch (error) {
-            elizaLogger.error("Error in handler:", error);
-            elizaLogger.error("Error details:", JSON.stringify(error, null, 2));
+            elizaLogger.error("خطا در پردازش درخواست:", error);
             return false;
         }
     },
