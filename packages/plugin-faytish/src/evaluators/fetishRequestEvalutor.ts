@@ -11,20 +11,26 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         try {
-            elizaLogger.debug("Received message:", {
-                content: message.content,
-                source: message.source,
-            });
+            elizaLogger.debug("=== Twitter DM Validation Start ===");
+            elizaLogger.debug(
+                "Full message object:",
+                JSON.stringify(message, null, 2)
+            );
+            elizaLogger.debug("Message content:", message.content);
+            elizaLogger.debug("Message source:", message.source);
+            elizaLogger.debug("Message type:", message.content.type);
+            elizaLogger.debug("Is DM:", message.content.isDM);
 
             if (message.content.isDM || message.source === "twitter_dm") {
-                elizaLogger.debug("Message is from Twitter DM");
+                elizaLogger.debug("✅ Message validated as Twitter DM");
                 return true;
             }
 
-            elizaLogger.debug("Message is not from Twitter DM");
+            elizaLogger.debug("❌ Message is not from Twitter DM");
             return false;
         } catch (error) {
             elizaLogger.error("Error in validate:", error);
+            elizaLogger.error("Error details:", JSON.stringify(error, null, 2));
             return false;
         }
     },
@@ -34,12 +40,15 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         try {
+            elizaLogger.debug("=== Twitter DM Handler Start ===");
             const runtimeWithTwitter = runtime as RuntimeWithTwitter;
+
             if (!runtimeWithTwitter.twitterClient) {
-                elizaLogger.error("Twitter client not available");
+                elizaLogger.error("❌ Twitter client not available");
                 return false;
             }
 
+            elizaLogger.debug("Twitter client available ✅");
             elizaLogger.debug("Processing message:", message.content.text);
 
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
@@ -47,9 +56,11 @@ export const fetishRequestEvaluator: Evaluator = {
                 "✅ I received your message! Processing your request..."
             );
 
+            elizaLogger.debug("✅ Response DM sent successfully");
             return true;
         } catch (error) {
             elizaLogger.error("Error in handler:", error);
+            elizaLogger.error("Error details:", JSON.stringify(error, null, 2));
             return false;
         }
     },

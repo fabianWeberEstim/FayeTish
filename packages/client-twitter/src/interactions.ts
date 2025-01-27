@@ -128,7 +128,8 @@ export class TwitterInteractionClient {
             let uniqueTweetCandidates = [...mentionCandidates];
             // Only process target users if configured
             if (this.client.twitterConfig.TWITTER_TARGET_USERS.length) {
-                const TARGET_USERS = this.client.twitterConfig.TWITTER_TARGET_USERS;
+                const TARGET_USERS =
+                    this.client.twitterConfig.TWITTER_TARGET_USERS;
 
                 elizaLogger.log("Processing target users:", TARGET_USERS);
 
@@ -336,7 +337,6 @@ export class TwitterInteractionClient {
         ${tweet.text}`
             )
             .join("\n\n");
-
         elizaLogger.debug("formattedConversation: ", formattedConversation);
 
         let state = await this.runtime.composeState(message, {
@@ -376,9 +376,9 @@ export class TwitterInteractionClient {
             };
             this.client.saveRequestMessage(message, state);
         }
-
         // get usernames into str
-        const validTargetUsersStr = this.client.twitterConfig.TWITTER_TARGET_USERS.join(",");
+        const validTargetUsersStr =
+            this.client.twitterConfig.TWITTER_TARGET_USERS.join(",");
 
         const shouldRespondContext = composeContext({
             state,
@@ -411,7 +411,6 @@ export class TwitterInteractionClient {
         });
 
         elizaLogger.debug("Interactions prompt:\n" + context);
-
         const response = await generateMessageResponse({
             runtime: this.runtime,
             context,
@@ -459,7 +458,6 @@ export class TwitterInteractionClient {
                         responseMessage
                     );
                 }
-
                 await this.runtime.processActions(
                     message,
                     responseMessages,
