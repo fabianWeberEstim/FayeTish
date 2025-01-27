@@ -83,7 +83,7 @@ export const fetishRequestEvaluator: Evaluator = {
             const txMemory: CoreMemory = {
                 userId: message.userId,
                 roomId: message.roomId,
-                content: { text: transactionId },
+                content: { text: transactionId || "" },
                 createdAt: Date.now(),
                 source: "twitter_dm",
                 agentId: message.agentId,

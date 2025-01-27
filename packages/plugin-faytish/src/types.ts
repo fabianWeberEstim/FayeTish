@@ -4,7 +4,7 @@ import { IAgentRuntime, Memory as CoreMemory } from "@elizaos/core";
 export interface Memory extends CoreMemory {
     source: string;
     content: {
-        text?: string;
+        text: string;
     };
     displayName?: string;
 }
