@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@elizaos/core";
+import { IAgentRuntime, Memory as CoreMemory, Provider } from "@elizaos/core";
 
 interface Content {
     text: string;
@@ -14,10 +14,11 @@ export interface CoreMemory {
     createdAt: number;
 }
 
-// گسترش Memory
+// گسترش Memory از CoreMemory
 export interface Memory extends CoreMemory {
-    source: string;
+    source?: string;
     displayName?: string;
+    id?: `${string}-${string}-${string}-${string}-${string}`;
 }
 
 export interface FootSubmission {
@@ -62,8 +63,7 @@ export interface FetishRequest {
     winnerSelected?: boolean;
 }
 
-// اصلاح Provider
-export interface Provider {
+// تعریف Provider
+export interface ExtendedProvider extends Provider {
     type: string;
-    get: (runtime: IAgentRuntime, memory: Memory) => Promise<any>;
 }

@@ -4,8 +4,14 @@ import {
     elizaLogger,
     ActionExample,
     Memory as CoreMemory,
+    Provider,
 } from "@elizaos/core";
-import { Memory, RuntimeWithTwitter, FetishRequest } from "../types";
+import {
+    Memory,
+    RuntimeWithTwitter,
+    FetishRequest,
+    ExtendedProvider,
+} from "../types";
 import { v4 as uuidv4 } from "uuid";
 
 interface SolanaTransaction {
@@ -21,10 +27,14 @@ export const fetishRequestEvaluator: Evaluator = {
 
     validate: async (
         runtime: IAgentRuntime,
-        message: Memory
+        message: CoreMemory
     ): Promise<boolean> => {
         try {
-            if (!message.source || message.source !== "twitter_dm") {
+            const extendedMessage = message as Memory;
+            if (
+                !extendedMessage.source ||
+                extendedMessage.source !== "twitter_dm"
+            ) {
                 return false;
             }
 
@@ -43,7 +53,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
     handler: async (
         runtime: IAgentRuntime,
-        message: Memory
+        message: CoreMemory
     ): Promise<boolean> => {
         try {
             const runtimeWithTwitter = runtime as RuntimeWithTwitter;
@@ -69,7 +79,7 @@ export const fetishRequestEvaluator: Evaluator = {
             const transactionId = transactionMatch[1];
 
             const solanaProvider = runtime.providers.find(
-                (p) => p.type === "solanaProvider"
+                (p) => (p as ExtendedProvider).type === "solanaProvider"
             );
             if (!solanaProvider) {
                 elizaLogger.error("Solana provider not found");
@@ -80,12 +90,11 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            const txMemory: Memory = {
+            const txMemory: CoreMemory = {
                 userId: message.userId,
                 roomId: message.roomId,
                 content: { text: transactionId || "" },
                 createdAt: Date.now(),
-                source: "twitter_dm",
                 agentId: message.agentId,
                 type: message.type,
             };
