@@ -1,4 +1,16 @@
-import { IAgentRuntime, Memory } from "@elizaos/core";
+import { IAgentRuntime, Memory as CoreMemory } from "@elizaos/core";
+
+// گسترش Memory
+export interface Memory {
+    userId: string;
+    roomId: string;
+    content: {
+        text?: string;
+    };
+    createdAt: number;
+    source: string;
+    displayName?: string;
+}
 
 export interface FootSubmission {
     userId: string;

@@ -1,12 +1,10 @@
 import {
     Evaluator,
     IAgentRuntime,
-    Memory,
     elizaLogger,
     ActionExample,
-    RuntimeWithTwitter,
 } from "@elizaos/core";
-import { FetishRequest } from "../types";
+import { Memory, RuntimeWithTwitter, FetishRequest } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
 interface SolanaTransaction {
@@ -25,12 +23,10 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         try {
-            // چک کردن اینکه پیام از دایرکت توییتر اومده
             if (!message.source || message.source !== "twitter_dm") {
                 return false;
             }
 
-            // چک کردن اینکه پیام حاوی درخواست و لینک تراکنش سولانا است
             return (
                 message.content.text?.includes("request:") &&
                 message.content.text?.includes("transaction:")
@@ -62,7 +58,6 @@ export const fetishRequestEvaluator: Evaluator = {
             const transactionMatch = text.match(/transaction:\s*([\w-]+)/i);
 
             if (!requestMatch || !transactionMatch) {
-                // ارسال پیام راهنمایی به کاربر
                 await runtimeWithTwitter.twitterClient.sendDirectMessage(
                     message.userId,
                     `❌ Invalid format! Please use this format:\n\nrequest: [your request]\ntransaction: [solana transaction ID]`
@@ -72,9 +67,8 @@ export const fetishRequestEvaluator: Evaluator = {
 
             const transactionId = transactionMatch[1];
 
-            // استفاده از پلاگین سولانا برای بررسی تراکنش
             const solanaProvider = runtime.providers.find(
-                (p) => p.id === "solanaProvider"
+                (p) => p.type === "solanaProvider"
             );
             if (!solanaProvider) {
                 elizaLogger.error("Solana provider not found");
@@ -85,9 +79,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            // ساخت یک Memory object برای استفاده در provider
             const txMemory: Memory = {
-                id: transactionId,
                 userId: message.userId,
                 roomId: message.roomId,
                 content: { text: transactionId },
@@ -118,7 +110,6 @@ export const fetishRequestEvaluator: Evaluator = {
                 transactionId: transactionId,
             };
 
-            // بررسی اعتبار درخواست
             if (request.bountyAmount < 100) {
                 await runtimeWithTwitter.twitterClient.sendDirectMessage(
                     message.userId,
@@ -135,7 +126,6 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            // ذخیره در لیست درخواست‌ها
             const requests =
                 (await runtime.cacheManager.get<FetishRequest[]>(
                     "valid_fetish_requests"
@@ -143,7 +133,6 @@ export const fetishRequestEvaluator: Evaluator = {
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
-            // ارسال پیام تایید
             const confirmationLink = `https://solscan.io/tx/${transactionId}`;
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
                 message.userId,
@@ -153,15 +142,6 @@ export const fetishRequestEvaluator: Evaluator = {
             return true;
         } catch (error) {
             elizaLogger.error("Error processing fetish request:", error);
-
-            // ارسال پیام خطا به کاربر
-            const runtimeWithTwitter = runtime as RuntimeWithTwitter;
-            if (runtimeWithTwitter.twitterClient) {
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    message.userId,
-                    `❌ An error occurred while processing your request. Please try again later.`
-                );
-            }
             return false;
         }
     },
