@@ -299,7 +299,7 @@ export class TwitterInteractionClient {
 
     private async handleDirectMessages() {
         try {
-            elizaLogger.debug("=== Checking Direct Messages ===");
+            elizaLogger.log("=== Checking Direct Messages ===");
 
             const dmsResponse = await this.client.getMs();
 
@@ -310,7 +310,7 @@ export class TwitterInteractionClient {
                         `processed_dm_${message.id}`
                     );
                     if (isDMProcessed) {
-                        elizaLogger.debug(
+                        elizaLogger.log(
                             `DM ${message.id} already processed, skipping`
                         );
                         continue;
@@ -325,7 +325,7 @@ export class TwitterInteractionClient {
                         `twitter_dm_${message.senderId}`
                     );
                     const userId = stringToUuid(message.senderId);
-
+                    elizaLogger.log("=== Checking Direct Messages 1===");
                     // ایجاد اتصال
                     await this.runtime.ensureConnection(
                         userId,
@@ -334,7 +334,7 @@ export class TwitterInteractionClient {
                         message.senderScreenName,
                         "twitter_dm"
                     );
-
+                    elizaLogger.log("=== Checking Direct Messages 2===");
                     // ساخت پیام برای پردازش
                     const memoryMessage: Memory = {
                         id: stringToUuid(
@@ -352,7 +352,7 @@ export class TwitterInteractionClient {
                         displayName: message.senderScreenName,
                         embedding: getEmbeddingZeroVector(),
                     };
-
+                    elizaLogger.log("=== Checking Direct Messages 3===");
                     // پردازش پیام
                     await this.runtime.processMessage(memoryMessage);
 
@@ -361,7 +361,7 @@ export class TwitterInteractionClient {
                         `processed_dm_${message.id}`,
                         true
                     );
-                    elizaLogger.debug(
+                    elizaLogger.log(
                         `Processed DM ${message.id} from ${message.senderScreenName}`
                     );
                 }
