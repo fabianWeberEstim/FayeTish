@@ -123,14 +123,15 @@ export const fetishRequestEvaluator: Evaluator = {
                 )) || [];
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
-
+            elizaLogger.log("jvb", request.conversationId);
             // ارسال پیام با استفاده از conversationId ثابت
-            await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                "1472790546787799043-1881796599787008000",
-                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
-            );
-
-            elizaLogger.debug(`New request registered - ID: ${request.id}`);
+            const jvb =
+                await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                    "1472790546787799043-1881796599787008000",
+                    `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
+                );
+            elizaLogger.log("jvb", jvb);
+            elizaLogger.log(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
