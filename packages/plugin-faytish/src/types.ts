@@ -2,6 +2,12 @@ import { IAgentRuntime, Memory as BaseMemory, Provider } from "@elizaos/core";
 
 interface Content {
     text: string;
+    tweetId?: string;
+    media?: Array<{
+        url: string;
+        type: string;
+    }>;
+    inReplyTo?: string;
 }
 
 // گسترش Memory از BaseMemory

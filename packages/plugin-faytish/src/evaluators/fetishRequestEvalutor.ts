@@ -3,7 +3,7 @@ import {
     IAgentRuntime,
     elizaLogger,
     ActionExample,
-    Memory as CoreMemory,
+    Memory as BaseMemory,
     Provider,
 } from "@elizaos/core";
 import {
@@ -27,7 +27,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
     validate: async (
         runtime: IAgentRuntime,
-        message: CoreMemory
+        message: BaseMemory
     ): Promise<boolean> => {
         try {
             const extendedMessage = message as Memory;
@@ -53,7 +53,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
     handler: async (
         runtime: IAgentRuntime,
-        message: CoreMemory
+        message: BaseMemory
     ): Promise<boolean> => {
         try {
             const runtimeWithTwitter = runtime as RuntimeWithTwitter;
@@ -90,13 +90,12 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            const txMemory: CoreMemory = {
+            const txMemory: BaseMemory = {
                 userId: message.userId,
                 roomId: message.roomId,
                 content: { text: transactionId || "" },
                 createdAt: Date.now(),
                 agentId: message.agentId,
-                type: message.type,
             };
 
             const transaction = (await solanaProvider.get(
