@@ -142,7 +142,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 responseMessage
             );
 
-            elizaLogger.log(`New request registered - ID: ${request.id}`);
+            elizaLogger.debug(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
