@@ -70,16 +70,17 @@ export const fetishRequestEvaluator: Evaluator = {
 
     handler: async (
         runtime: IAgentRuntime,
-        message: BaseMemory
+        message: Memory
     ): Promise<boolean> => {
+        const runtimeWithTwitter = runtime as RuntimeWithTwitter;
+
         try {
-            const runtimeWithTwitter = runtime as RuntimeWithTwitter;
+            elizaLogger.debug("=== Starting Twitter DM Processing ===");
+
             if (!runtimeWithTwitter.twitterClient) {
-                elizaLogger.error("Twitter client not available");
+                elizaLogger.error("❌ Twitter client not available");
                 return false;
             }
-
-            elizaLogger.debug("Processing DM request:", message);
 
             const text = message.content.text;
             const requestMatch = text.match(
@@ -90,76 +91,26 @@ export const fetishRequestEvaluator: Evaluator = {
             if (!requestMatch || !transactionMatch) {
                 await runtimeWithTwitter.twitterClient.sendDirectMessage(
                     message.userId,
-                    `❌ Invalid format! Please use this format:\n\nrequest: [your request]\ntransaction: [solana transaction ID]`
+                    `❌ Invalid format! Please use this format:\n\nrequest: [your request]\ntransaction: [transaction ID]`
                 );
                 return false;
             }
 
-            const transactionId = transactionMatch[1];
             const requestText = requestMatch[1].trim();
+            const transactionId = transactionMatch[1];
 
-            elizaLogger.debug(`Received request: ${requestText}`);
-            elizaLogger.debug(`Transaction ID: ${transactionId}`);
-
-            if (requestText.length < 10) {
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    message.userId,
-                    `❌ Your request is too short! Please provide more details.`
-                );
-                return false;
-            }
-
-            const solanaProvider = runtime.providers.find(
-                (p) => (p as ExtendedProvider).type === "solanaProvider"
-            );
-            if (!solanaProvider) {
-                elizaLogger.error("Solana provider not found");
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    message.userId,
-                    `❌ Sorry, our transaction verification service is currently unavailable. Please try again later.`
-                );
-                return false;
-            }
-
-            const txMemory: BaseMemory = {
-                userId: message.userId,
-                roomId: message.roomId,
-                content: { text: transactionId || "" },
-                createdAt: Date.now(),
-                agentId: message.agentId,
-            };
-
-            const transaction = (await solanaProvider.get(
-                runtime,
-                txMemory
-            )) as SolanaTransaction;
-
-            if (!transaction || transaction.status !== "confirmed") {
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    message.userId,
-                    `❌ Transaction not confirmed! Please make sure your transaction is confirmed on Solana network and try again.`
-                );
-                return false;
-            }
-
+            // Create new request
             const request: FetishRequest = {
                 id: uuidv4(),
                 userId: message.userId,
                 request: requestText,
-                bountyAmount: transaction.amount,
+                bountyAmount: 0, // Default value for now
                 timestamp: Date.now(),
                 isValid: true,
                 transactionId: transactionId,
             };
 
-            if (request.bountyAmount < 100) {
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    message.userId,
-                    `❌ Bounty amount must be at least 100 tokens!`
-                );
-                return false;
-            }
-
+            // Save request to cache
             const requests =
                 (await runtime.cacheManager.get<FetishRequest[]>(
                     "valid_fetish_requests"
@@ -167,27 +118,24 @@ export const fetishRequestEvaluator: Evaluator = {
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
-            const confirmationLink = `https://solscan.io/tx/${transactionId}`;
-            elizaLogger.log("link of confirmation", confirmationLink);
+            // Send confirmation message
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
                 message.userId,
-                `✅ Processing your request...\nTransaction ID: ${transactionId}\n\nPlease wait while we verify your transaction.`
+                `✅ Your request has been successfully registered!\n\n🔍 Request ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request is queued and will be posted soon.`
             );
 
+            elizaLogger.debug(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
-            elizaLogger.error("Error processing fetish request:", error);
-
+            elizaLogger.error("Error processing DM:", error);
             try {
-                const runtimeWithTwitter = runtime as RuntimeWithTwitter;
                 await runtimeWithTwitter.twitterClient?.sendDirectMessage(
                     message.userId,
-                    `❌ An error occurred while processing your request. Please try again later.`
+                    "❌ An error occurred while processing your request. Please try again."
                 );
-            } catch (dmError) {
-                elizaLogger.error("Error sending error DM:", dmError);
+            } catch (sendError) {
+                elizaLogger.error("Error sending error message:", sendError);
             }
-
             return false;
         }
     },
