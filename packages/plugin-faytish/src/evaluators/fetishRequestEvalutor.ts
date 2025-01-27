@@ -14,10 +14,74 @@ import {
 } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
-interface SolanaTransaction {
-    signature: string;
-    status: "confirmed" | "pending" | "failed";
-    amount: number;
+const requestTemplate = `
+TASK: Validate fetish request from Twitter DM.
+
+Request Format:
+- Must start with "request:"
+- Must include transaction ID
+- Must be related to feet/nails content
+- Must be appropriate and clear
+
+Please validate:
+1. Format Validation
+- Correct request format
+- Valid transaction ID
+- Clear description
+
+2. Content Validation
+- Related to feet/nails
+- Appropriate content
+- Clear requirements
+
+3. Request Details:
+{{request}}
+Transaction: {{transaction}}
+`;
+
+interface RequestValidation {
+    isValid: boolean;
+    hasValidFormat: boolean;
+    hasValidContent: boolean;
+    errorMessage?: string;
+}
+
+function validateRequest(text: string): RequestValidation {
+    const requestMatch = text.match(/request:\s*(.+?)(?=\s*transaction:|$)/i);
+    // const transactionMatch = text.match(/transaction:\s*([\w-]+)/i);
+
+    // if (!requestMatch || !transactionMatch) {
+    if (!requestMatch) {
+        return {
+            isValid: false,
+            hasValidFormat: false,
+            hasValidContent: false,
+            errorMessage:
+                // "Invalid format! Use: request: [request] transaction: [ID]",
+                "Invalid format! Use: request: [request]",
+        };
+    }
+
+    const requestText = requestMatch[1].trim().toLowerCase();
+    const validKeywords = ["feet", "foot", "nails", "toes"];
+    const hasValidKeywords = validKeywords.some((keyword) =>
+        requestText.includes(keyword)
+    );
+
+    if (!hasValidKeywords) {
+        return {
+            isValid: false,
+            hasValidFormat: true,
+            hasValidContent: false,
+            errorMessage: "Request must be related to feet or nails content",
+        };
+    }
+
+    return {
+        isValid: true,
+        hasValidFormat: true,
+        hasValidContent: true,
+    };
 }
 
 export const fetishRequestEvaluator: Evaluator = {
@@ -47,18 +111,8 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            const hasRequest = message.content.text
-                ?.toLowerCase()
-                .includes("request:");
-            const hasTransaction = message.content.text
-                ?.toLowerCase()
-                .includes("transaction:");
-
-            elizaLogger.debug(
-                `Message validation - hasRequest: ${hasRequest}, hasTransaction: ${hasTransaction}`
-            );
-
-            return hasRequest && hasTransaction;
+            const validation = validateRequest(message.content.text);
+            return validation.isValid;
         } catch (error) {
             elizaLogger.error(
                 "Error in fetishRequestEvaluator validate:",
@@ -82,22 +136,23 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            const text = message.content.text;
-            const requestMatch = text.match(
-                /request:\s*(.+?)(?=\s*transaction:|$)/i
-            );
-            const transactionMatch = text.match(/transaction:\s*([\w-]+)/i);
-
-            if (!requestMatch || !transactionMatch) {
+            const validation = validateRequest(message.content.text);
+            if (!validation.isValid) {
                 await runtimeWithTwitter.twitterClient.sendDirectMessage(
                     message.userId,
-                    `❌ Invalid format! Please use this format:\n\nrequest: [your request]\ntransaction: [transaction ID]`
+                    `❌ ${validation.errorMessage}`
                 );
                 return false;
             }
 
+            const requestMatch = message.content.text.match(
+                /request:\s*(.+?)(?=\s*transaction:|$)/i
+            );
+            // const transactionMatch = message.content.text.match(
+            //     /transaction:\s*([\w-]+)/i
+            // );
             const requestText = requestMatch[1].trim();
-            const transactionId = transactionMatch[1];
+            // const transactionId = transactionMatch[1];
 
             // Create new request
             const request: FetishRequest = {
@@ -107,7 +162,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 bountyAmount: 0, // Default value for now
                 timestamp: Date.now(),
                 isValid: true,
-                transactionId: transactionId,
+                transactionId: "pending", // temporary placeholder
             };
 
             // Save request to cache
@@ -121,7 +176,7 @@ export const fetishRequestEvaluator: Evaluator = {
             // Send confirmation message
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
                 message.userId,
-                `✅ Your request has been successfully registered!\n\n🔍 Request ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request is queued and will be posted soon.`
+                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
             );
 
             elizaLogger.debug(`New request registered - ID: ${request.id}`);
@@ -131,7 +186,7 @@ export const fetishRequestEvaluator: Evaluator = {
             try {
                 await runtimeWithTwitter.twitterClient?.sendDirectMessage(
                     message.userId,
-                    "❌ An error occurred while processing your request. Please try again."
+                    "❌ An error occurred. Please try again."
                 );
             } catch (sendError) {
                 elizaLogger.error("Error sending error message:", sendError);
