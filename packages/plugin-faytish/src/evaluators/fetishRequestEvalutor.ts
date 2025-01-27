@@ -5,6 +5,7 @@ import {
     ActionExample,
     Memory as BaseMemory,
     Provider,
+    stringToUuid,
 } from "@elizaos/core";
 
 import {
@@ -128,7 +129,7 @@ export const fetishRequestEvaluator: Evaluator = {
                     type: "dm",
                     isDM: true,
                 },
-                roomId: message.roomId,
+                roomId: stringToUuid(message.roomId),
                 userId: message.userId,
                 conversationId: message.conversationId,
                 source: "twitter_dm",
