@@ -364,17 +364,23 @@ export class TwitterInteractionClient {
 
     private async handleMessage(message: Memory) {
         try {
-            // اجرای evaluator‌ها
+            // اضافه کردن twitterClient به runtime
+            const runtimeWithTwitter = {
+                ...this.runtime,
+                twitterClient: this.client,
+            };
+
+            // اجرای evaluator‌ها با runtime جدید
             for (const evaluator of this.runtime.evaluators) {
-                if (await evaluator.validate(this.runtime, message)) {
-                    await evaluator.handler(this.runtime, message);
+                if (await evaluator.validate(runtimeWithTwitter, message)) {
+                    await evaluator.handler(runtimeWithTwitter, message);
                 }
             }
 
-            // اجرای action‌ها
+            // اجرای action‌ها با runtime جدید
             for (const action of this.runtime.actions) {
-                if (await action.validate(this.runtime)) {
-                    await action.handler(this.runtime);
+                if (await action.validate(runtimeWithTwitter)) {
+                    await action.handler(runtimeWithTwitter);
                 }
             }
         } catch (error) {
