@@ -396,10 +396,10 @@ export class TwitterInteractionClient {
                 },
             };
 
-            const jvb = await this.client.twitterClient.sendDirectMessage(
-                "1472790546787799043-1881796599787008000",
-                "Hi how are you?"
-            );
+            // const jvb = await this.client.twitterClient.sendDirectMessage(
+            //     "1472790546787799043-1881796599787008000",
+            //     "Hi how are you?"
+            // );
 
             elizaLogger.log("Runtime with Twitter created", jvb);
 

@@ -78,23 +78,13 @@ export const fetishRequestEvaluator: Evaluator = {
         message: BaseMemory
     ): Promise<boolean> => {
         try {
-            elizaLogger.debug("Validating message:", message);
-
             const extendedMessage = message as Memory;
-            if (
-                !extendedMessage.content.isDM ||
-                !extendedMessage.content.conversationId
-            ) {
-                elizaLogger.debug("Message is not from Twitter DM");
-                return false;
-            }
-
-            return validateRequest(message.content.text);
-        } catch (error) {
-            elizaLogger.error(
-                "Error in fetishRequestEvaluator validate:",
-                error
+            return (
+                extendedMessage.content.isDM &&
+                validateRequest(message.content.text)
             );
+        } catch (error) {
+            elizaLogger.error("Error in validate:", error);
             return false;
         }
     },
@@ -104,32 +94,29 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         const runtimeWithTwitter = runtime as RuntimeWithTwitter;
-        const content = message.content as TwitterDMContent;
 
         try {
-            elizaLogger.debug("=== Starting Twitter DM Processing ===");
-
             if (!runtimeWithTwitter.twitterClient) {
-                elizaLogger.error("❌ Twitter client not available");
+                elizaLogger.error("Twitter client not available");
                 return false;
             }
 
-            const requestMatch = content.text.match(/^request:\s*(.+)/i);
+            const requestMatch =
+                message.content.text.match(/^request:\s*(.+)/i);
             const requestText = requestMatch[1].trim();
 
             const request: FetishRequest = {
                 id: uuidv4(),
-                userId: content.senderId,
-                userScreenName: content.senderScreenName,
+                userId: message.userId,
                 request: requestText,
                 bountyAmount: 0,
                 timestamp: Date.now(),
                 isValid: true,
-                conversationId: content.conversationId,
-                transactionId: "", // Empty for now
+                transactionId: "",
+                conversationId: message.content.conversationId,
+                userScreenName: message.content.senderScreenName,
             };
 
-            // Save request with conversation details
             const requests =
                 (await runtime.cacheManager.get<FetishRequest[]>(
                     "valid_fetish_requests"
@@ -137,24 +124,20 @@ export const fetishRequestEvaluator: Evaluator = {
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
-            // Send response using conversationId
+            // ارسال پیام با استفاده از conversationId ثابت
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                content.senderId,
-                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n👤 User: @${content.senderScreenName}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`,
-                content.conversationId
+                "1472790546787799043-1881796599787008000",
+                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
             );
 
-            elizaLogger.debug(
-                `New request registered - ID: ${request.id} - Conversation: ${content.conversationId}`
-            );
+            elizaLogger.debug(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
             try {
                 await runtimeWithTwitter.twitterClient?.sendDirectMessage(
-                    content.senderId,
-                    "❌ An error occurred. Please try again with format: request: [your request]",
-                    content.conversationId
+                    "1472790546787799043-1881796599787008000",
+                    "❌ An error occurred. Please try again with format: request: [your request]"
                 );
             } catch (sendError) {
                 elizaLogger.error("Error sending error message:", sendError);
