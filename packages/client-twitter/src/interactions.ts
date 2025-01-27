@@ -299,63 +299,72 @@ export class TwitterInteractionClient {
 
     private async handleDirectMessages() {
         try {
-            elizaLogger.log("=== Checking Direct Messages ===");
+            elizaLogger.debug("=== Checking Direct Messages ===");
 
-            // دریافت دایرکت مسیج‌های جدید
-            const messages = await this.client.getMs();
+            const dmsResponse = await this.client.getMs();
 
-            elizaLogger.log("all DMS: ", messages);
-
-            for (const dm of messages) {
-                // چک کردن پیام‌های پردازش نشده
-                const isDMProcessed = await this.runtime.cacheManager.get(
-                    `processed_dm_${dm.id}`
-                );
-                if (isDMProcessed) {
-                    elizaLogger.debug(
-                        `DM ${dm.id} already processed, skipping`
+            for (const conversation of dmsResponse.conversations) {
+                for (const message of conversation.messages) {
+                    // چک کردن پیام‌های پردازش نشده
+                    const isDMProcessed = await this.runtime.cacheManager.get(
+                        `processed_dm_${message.id}`
                     );
-                    continue;
+                    if (isDMProcessed) {
+                        elizaLogger.debug(
+                            `DM ${message.id} already processed, skipping`
+                        );
+                        continue;
+                    }
+
+                    // فقط پیام‌هایی که به بات ارسال شده‌اند را پردازش کن
+                    if (message.recipientId !== this.client.profile.id) {
+                        continue;
+                    }
+
+                    const roomId = stringToUuid(
+                        `twitter_dm_${message.senderId}`
+                    );
+                    const userId = stringToUuid(message.senderId);
+
+                    // ایجاد اتصال
+                    await this.runtime.ensureConnection(
+                        userId,
+                        roomId,
+                        message.senderScreenName,
+                        message.senderScreenName,
+                        "twitter_dm"
+                    );
+
+                    // ساخت پیام برای پردازش
+                    const memoryMessage: Memory = {
+                        id: stringToUuid(
+                            message.id + "-" + this.runtime.agentId
+                        ),
+                        agentId: this.runtime.agentId,
+                        content: {
+                            text: message.text,
+                            type: "dm",
+                            isDM: true,
+                        },
+                        roomId,
+                        userId,
+                        source: "twitter_dm",
+                        displayName: message.senderScreenName,
+                        embedding: getEmbeddingZeroVector(),
+                    };
+
+                    // پردازش پیام
+                    await this.runtime.processMessage(memoryMessage);
+
+                    // علامت‌گذاری پیام به عنوان پردازش شده
+                    await this.runtime.cacheManager.set(
+                        `processed_dm_${message.id}`,
+                        true
+                    );
+                    elizaLogger.debug(
+                        `Processed DM ${message.id} from ${message.senderScreenName}`
+                    );
                 }
-
-                const roomId = stringToUuid(
-                    `twitter_dm_${dm.message_create.sender_id}`
-                );
-                const userId = stringToUuid(dm.message_create.sender_id);
-
-                // ایجاد اتصال
-                await this.runtime.ensureConnection(
-                    userId,
-                    roomId,
-                    dm.message_create.sender_id,
-                    "Twitter User",
-                    "twitter_dm"
-                );
-
-                // ساخت پیام برای پردازش
-                const message: Memory = {
-                    id: stringToUuid(dm.id + "-" + this.runtime.agentId),
-                    agentId: this.runtime.agentId,
-                    content: {
-                        text: dm.message_create.message_data.text,
-                        type: "dm",
-                        isDM: true,
-                    },
-                    roomId,
-                    userId,
-                    source: "twitter_dm",
-                    embedding: getEmbeddingZeroVector(),
-                };
-
-                // پردازش پیام
-                await this.runtime.processMessage(message);
-
-                // علامت‌گذاری پیام به عنوان پردازش شده
-                await this.runtime.cacheManager.set(
-                    `processed_dm_${dm.id}`,
-                    true
-                );
-                elizaLogger.log(`Processed DM ${dm.id}`);
             }
         } catch (error) {
             elizaLogger.error("Error handling direct messages:", error);
