@@ -10,6 +10,9 @@ export interface Content {
     inReplyTo?: string;
     type?: string;
     isDM?: boolean;
+    conversationId?: string;
+    senderId?: string;
+    senderScreenName?: string;
 }
 
 // استفاده از Partial برای فیلدهای اختیاری
