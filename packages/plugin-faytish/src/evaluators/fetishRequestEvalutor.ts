@@ -120,7 +120,6 @@ export const fetishRequestEvaluator: Evaluator = {
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
-            // ساخت پیام پاسخ
             const responseMessage: Memory = {
                 id: stringToUuid(uuidv4()),
                 agentId: runtime.agentId,
@@ -155,14 +154,13 @@ export const fetishRequestEvaluator: Evaluator = {
                 {
                     user: "{{user1}}",
                     content: {
-                        text: "request: Show feet with red nail polish\ntransaction: 5KjdKMWvJu2xCAQXxS2vpkib79x",
+                        text: "request: Show feet with red nail polish",
                         type: "twitter_dm",
                         isDM: true,
                     },
                 },
             ],
-            outcome:
-                "Request validated and stored with transaction verification",
+            outcome: "Request validated and stored",
         },
     ],
 };

@@ -299,34 +299,18 @@ export class TwitterInteractionClient {
 
     private async handleDirectMessages() {
         try {
-            elizaLogger.log("=== Checking Direct Messages ===");
-
             const dmsResponse = await this.client.getMs();
 
             for (const conversation of dmsResponse.conversations) {
                 for (const message of conversation.messages) {
-                    // چک کردن پیام‌های پردازش نشده
                     const isDMProcessed = await this.runtime.cacheManager.get(
                         `processed_dm_${message.id}`
                     );
-                    if (isDMProcessed) {
-                        elizaLogger.log(
-                            `DM ${message.id} already processed, skipping`
-                        );
-                        continue;
-                    }
-                    elizaLogger.log("=== Checking Direct Messages 2===");
-                    // فقط پیام‌هایی که به بات ارسال شده‌اند را پردازش کن
-                    if (message.recipientId !== this.client.profile.id) {
-                        continue;
-                    }
+                    if (isDMProcessed) continue;
 
-                    const roomId = stringToUuid(
-                        `twitter_dm_${message.senderId}`
-                    );
-                    const userId = stringToUuid(message.senderId);
-                    elizaLogger.log("=== Checking Direct Messages 3===");
-                    // ساخت پیام برای پردازش
+                    if (message.recipientId !== this.client.profile.id)
+                        continue;
+
                     const memoryMessage: Memory = {
                         id: stringToUuid(
                             message.id + "-" + this.runtime.agentId
@@ -337,24 +321,20 @@ export class TwitterInteractionClient {
                             type: "dm",
                             isDM: true,
                         },
-                        roomId,
-                        userId,
+                        roomId: stringToUuid(`twitter_dm_${message.senderId}`),
+                        userId: stringToUuid(message.senderId),
                         conversationId: `${message.senderId}-${message.recipientId}`,
                         source: "twitter_dm",
                         displayName: message.senderScreenName,
                         embedding: getEmbeddingZeroVector(),
                     };
-                    elizaLogger.log("=== Checking Direct Messages 4===");
-                    // استفاده از handleMessage به جای processMessage
-                    await this.handleMessage(memoryMessage);
-                    elizaLogger.log("=== Checking Direct Messages 5===");
-                    // علامت‌گذاری پیام به عنوان پردازش شده
+
+                    // ارسال پیام به evaluator
+                    await this.runtime.evaluateMessage(memoryMessage);
+
                     await this.runtime.cacheManager.set(
                         `processed_dm_${message.id}`,
                         true
-                    );
-                    elizaLogger.log(
-                        `Processed DM ${message.id} from ${message.senderScreenName}`
                     );
                 }
             }
