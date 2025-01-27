@@ -133,13 +133,16 @@ export const fetishRequestEvaluator: Evaluator = {
                 conversationId: message.conversationId,
                 source: "twitter_dm",
             };
-
+            elizaLogger.log(
+                "responseMessage *************** :",
+                responseMessage
+            );
             // ارسال پیام با استفاده از handleMessage
             await runtimeWithTwitter.twitterClient.handleMessage(
                 responseMessage
             );
 
-            elizaLogger.debug(`New request registered - ID: ${request.id}`);
+            elizaLogger.log(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
