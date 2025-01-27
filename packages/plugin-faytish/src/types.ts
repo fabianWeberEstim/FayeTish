@@ -12,17 +12,13 @@ export interface Content {
     isDM?: boolean;
 }
 
-// گسترش Memory از BaseMemory
-export interface Memory {
-    userId: string;
-    roomId: string;
-    agentId: string;
-    content: Content;
+// استفاده از Partial برای فیلدهای اختیاری
+export type Memory = BaseMemory & {
     source?: string;
     displayName?: string;
     id?: `${string}-${string}-${string}-${string}-${string}`;
-    createdAt: number;
-}
+    content: Content;
+};
 
 export interface FootSubmission {
     userId: string;
