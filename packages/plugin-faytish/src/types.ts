@@ -55,13 +55,13 @@ export interface RuntimeWithTwitter extends IAgentRuntime {
 export interface FetishRequest {
     id: string;
     userId: string;
+    userScreenName: string;
     request: string;
     bountyAmount: number;
     timestamp: number;
     isValid: boolean;
-    postId?: string;
+    conversationId: string;
     transactionId: string;
-    winnerSelected?: boolean;
 }
 
 export interface ExtendedProvider extends Provider {

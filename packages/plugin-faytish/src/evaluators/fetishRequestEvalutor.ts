@@ -46,42 +46,21 @@ interface RequestValidation {
     errorMessage?: string;
 }
 
-function validateRequest(text: string): RequestValidation {
-    const requestMatch = text.match(/request:\s*(.+?)(?=\s*transaction:|$)/i);
-    // const transactionMatch = text.match(/transaction:\s*([\w-]+)/i);
+interface TwitterDMContent {
+    text: string;
+    isDM: boolean;
+    conversationId: string;
+    senderId: string;
+    senderScreenName: string;
+}
 
-    // if (!requestMatch || !transactionMatch) {
-    if (!requestMatch) {
-        return {
-            isValid: false,
-            hasValidFormat: false,
-            hasValidContent: false,
-            errorMessage:
-                // "Invalid format! Use: request: [request] transaction: [ID]",
-                "Invalid format! Use: request: [request]",
-        };
-    }
+function validateRequest(text: string): boolean {
+    const requestMatch = text.toLowerCase().match(/^request:\s*(.+)/i);
+    if (!requestMatch) return false;
 
     const requestText = requestMatch[1].trim().toLowerCase();
     const validKeywords = ["feet", "foot", "nails", "toes"];
-    const hasValidKeywords = validKeywords.some((keyword) =>
-        requestText.includes(keyword)
-    );
-
-    if (!hasValidKeywords) {
-        return {
-            isValid: false,
-            hasValidFormat: true,
-            hasValidContent: false,
-            errorMessage: "Request must be related to feet or nails content",
-        };
-    }
-
-    return {
-        isValid: true,
-        hasValidFormat: true,
-        hasValidContent: true,
-    };
+    return validKeywords.some((keyword) => requestText.includes(keyword));
 }
 
 export const fetishRequestEvaluator: Evaluator = {
@@ -103,16 +82,14 @@ export const fetishRequestEvaluator: Evaluator = {
 
             const extendedMessage = message as Memory;
             if (
-                extendedMessage.content.type !== "twitter_dm" &&
-                extendedMessage.source !== "twitter_dm" &&
-                !extendedMessage.content.isDM
+                !extendedMessage.content.isDM ||
+                !extendedMessage.content.conversationId
             ) {
                 elizaLogger.debug("Message is not from Twitter DM");
                 return false;
             }
 
-            const validation = validateRequest(message.content.text);
-            return validation.isValid;
+            return validateRequest(message.content.text);
         } catch (error) {
             elizaLogger.error(
                 "Error in fetishRequestEvaluator validate:",
@@ -127,6 +104,7 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         const runtimeWithTwitter = runtime as RuntimeWithTwitter;
+        const content = message.content as TwitterDMContent;
 
         try {
             elizaLogger.debug("=== Starting Twitter DM Processing ===");
@@ -136,44 +114,22 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            const validation = validateRequest(message.content.text);
-            if (!validation.isValid) {
-                try {
-                    await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                        message.userId,
-                        `❌ ${validation.errorMessage}`
-                    );
-                } catch (sendError) {
-                    elizaLogger.error("Error sending DM:", {
-                        error: sendError,
-                        userId: message.userId,
-                        hasTwitterClient: !!runtimeWithTwitter.twitterClient,
-                    });
-                }
-                return false;
-            }
-
-            const requestMatch = message.content.text.match(
-                /request:\s*(.+?)(?=\s*transaction:|$)/i
-            );
-            // const transactionMatch = message.content.text.match(
-            //     /transaction:\s*([\w-]+)/i
-            // );
+            const requestMatch = content.text.match(/^request:\s*(.+)/i);
             const requestText = requestMatch[1].trim();
-            // const transactionId = transactionMatch[1];
 
-            // Create new request
             const request: FetishRequest = {
                 id: uuidv4(),
-                userId: message.userId,
+                userId: content.senderId,
+                userScreenName: content.senderScreenName,
                 request: requestText,
-                bountyAmount: 0, // Default value for now
+                bountyAmount: 0,
                 timestamp: Date.now(),
                 isValid: true,
-                transactionId: "pending", // temporary placeholder
+                conversationId: content.conversationId,
+                transactionId: "", // Empty for now
             };
 
-            // Save request to cache
+            // Save request with conversation details
             const requests =
                 (await runtime.cacheManager.get<FetishRequest[]>(
                     "valid_fetish_requests"
@@ -181,20 +137,24 @@ export const fetishRequestEvaluator: Evaluator = {
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
-            // Send confirmation message
+            // Send response using conversationId
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                message.userId,
-                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
+                content.senderId,
+                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n👤 User: @${content.senderScreenName}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`,
+                content.conversationId
             );
 
-            elizaLogger.debug(`New request registered - ID: ${request.id}`);
+            elizaLogger.debug(
+                `New request registered - ID: ${request.id} - Conversation: ${content.conversationId}`
+            );
             return true;
         } catch (error) {
-            elizaLogger.error("Error processing DM:", error);
+            elizaLogger.error("Error processing request:", error);
             try {
                 await runtimeWithTwitter.twitterClient?.sendDirectMessage(
-                    message.userId,
-                    "❌ An error occurred. Please try again."
+                    content.senderId,
+                    "❌ An error occurred. Please try again with format: request: [your request]",
+                    content.conversationId
                 );
             } catch (sendError) {
                 elizaLogger.error("Error sending error message:", sendError);
