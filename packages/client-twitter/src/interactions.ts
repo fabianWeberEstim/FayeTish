@@ -343,7 +343,7 @@ export class TwitterInteractionClient {
         }
     }
 
-    private async handleMessage(message: Memory) {
+    async handleMessage(message: Memory) {
         try {
             elizaLogger.log("=== Starting handleMessage ===");
             elizaLogger.log("Message:", JSON.stringify(message, null, 2));
