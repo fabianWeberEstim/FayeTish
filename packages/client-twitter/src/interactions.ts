@@ -355,7 +355,7 @@ export class TwitterInteractionClient {
                     elizaLogger.log("=== Checking Direct Messages 3===");
                     // پردازش پیام
                     await this.runtime.processMessage(memoryMessage);
-
+                    elizaLogger.log("=== Checking Direct Messages 4===");
                     // علامت‌گذاری پیام به عنوان پردازش شده
                     await this.runtime.cacheManager.set(
                         `processed_dm_${message.id}`,
