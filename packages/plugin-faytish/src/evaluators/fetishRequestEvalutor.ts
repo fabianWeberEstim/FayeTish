@@ -41,7 +41,7 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         try {
-            elizaLogger.log("=== شروع پردازش DM توییتر ===");
+            elizaLogger.debug("=== شروع پردازش DM توییتر ===");
             const runtimeWithTwitter = runtime as RuntimeWithTwitter;
 
             if (!runtimeWithTwitter.twitterClient) {
@@ -49,16 +49,43 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            elizaLogger.log("✅ پردازش پیام DM:", message.content.text);
+            elizaLogger.debug("✅ پردازش پیام DM:", message.content.text);
 
-            // ارسال پاسخ به کاربر
-            await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                message.userId,
-                "✅ پیام شما دریافت شد! در حال پردازش درخواست شما هستم..."
-            );
+            try {
+                // پردازش درخواست
+                const request = message.content.text;
 
-            elizaLogger.log("✅ پاسخ DM با موفقیت ارسال شد");
-            return true;
+                // ارسال پاسخ اولیه به کاربر
+                await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                    message.userId,
+                    "✅ درخواست شما دریافت شد! در حال پردازش..."
+                );
+
+                // اینجا پردازش اصلی درخواست را انجام دهید
+                // مثال: بررسی تراکنش، تولید تصویر و غیره
+
+                // ارسال پاسخ نهایی
+                await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                    message.userId,
+                    "🎉 درخواست شما با موفقیت پردازش شد! تصویر در حال آماده‌سازی است..."
+                );
+
+                return true;
+            } catch (sendError) {
+                elizaLogger.error("خطا در ارسال پیام:", sendError);
+
+                // تلاش برای ارسال پیام خطا به کاربر
+                try {
+                    await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                        message.userId,
+                        "❌ متأسفانه در پردازش درخواست شما خطایی رخ داد. لطفاً دوباره تلاش کنید."
+                    );
+                } catch (notifyError) {
+                    elizaLogger.error("خطا در ارسال پیام خطا:", notifyError);
+                }
+
+                return false;
+            }
         } catch (error) {
             elizaLogger.error("خطا در پردازش DM:", error);
             elizaLogger.error("جزئیات خطا:", JSON.stringify(error, null, 2));
