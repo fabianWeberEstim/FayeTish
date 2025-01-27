@@ -7,7 +7,6 @@ import {
     Provider,
 } from "@elizaos/core";
 
-import { ClientBase } from "@elizaos/client-twitter/src/base";
 import {
     Memory,
     RuntimeWithTwitter,
@@ -131,7 +130,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 },
                 roomId: message.roomId,
                 userId: message.userId,
-                conversationId: message.content.conversationId,
+                conversationId: message.conversationId,
                 source: "twitter_dm",
             };
 
