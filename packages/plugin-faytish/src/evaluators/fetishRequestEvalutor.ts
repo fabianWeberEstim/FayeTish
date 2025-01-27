@@ -138,10 +138,18 @@ export const fetishRequestEvaluator: Evaluator = {
 
             const validation = validateRequest(message.content.text);
             if (!validation.isValid) {
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    message.userId,
-                    `❌ ${validation.errorMessage}`
-                );
+                try {
+                    await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                        message.userId,
+                        `❌ ${validation.errorMessage}`
+                    );
+                } catch (sendError) {
+                    elizaLogger.error("Error sending DM:", {
+                        error: sendError,
+                        userId: message.userId,
+                        hasTwitterClient: !!runtimeWithTwitter.twitterClient,
+                    });
+                }
                 return false;
             }
 

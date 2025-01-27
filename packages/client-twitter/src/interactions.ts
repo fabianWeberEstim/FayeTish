@@ -371,10 +371,17 @@ export class TwitterInteractionClient {
             const runtimeWithTwitter = {
                 ...this.runtime,
                 twitterClient: {
-                    sendDirectMessage:
-                        this.client.twitterClient.sendDirectMessage.bind(
-                            this.client
-                        ),
+                    sendDirectMessage: async (userId: string, text: string) => {
+                        const dmsResponse = await this.client.getMs();
+                        const conversation = dmsResponse.conversations.find(
+                            (conv) => conv.participants.includes(userId)
+                        );
+
+                        await this.client.twitterClient.sendDirectMessage(
+                            conversation?.id,
+                            text
+                        );
+                    },
                 },
             };
 
