@@ -6,6 +6,7 @@ export interface FootSubmission {
     tweetId: string;
     imageUrl: string;
     timestamp: number;
+    requestId: string;
 }
 
 export interface ChallengePost {
@@ -25,4 +26,17 @@ export interface ExtendedMemory extends Memory {
 // تغییر ساختار ExtendedRuntime به RuntimeWithTwitter
 export interface RuntimeWithTwitter extends IAgentRuntime {
     twitterClient?: TwitterClient;
+}
+
+// اضافه کردن interface جدید
+export interface FetishRequest {
+    id: string;
+    userId: string;
+    request: string;
+    bountyAmount: number;
+    timestamp: number;
+    isValid: boolean;
+    postId?: string;
+    transactionId: string;
+    winnerSelected?: boolean;
 }

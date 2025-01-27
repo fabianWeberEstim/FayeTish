@@ -1,1 +1,1 @@
-export * from "./footImageEvaluator.ts";
+export * from "./fetishRequestEvalutor.ts";
