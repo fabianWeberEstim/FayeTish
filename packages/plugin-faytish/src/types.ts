@@ -17,7 +17,7 @@ export interface Content {
 export type Memory = BaseMemory & {
     source?: string;
     displayName?: string;
-    id?: string;
+    id?: `${string}-${string}-${string}-${string}-${string}`;
     content: Content;
     conversationId: string;
     senderScreenName?: string;
