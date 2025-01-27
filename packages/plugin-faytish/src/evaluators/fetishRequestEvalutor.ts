@@ -139,8 +139,9 @@ export const fetishRequestEvaluator: Evaluator = {
             );
             // ارسال پیام با استفاده از handleMessage
             const jvb =
-                await runtimeWithTwitter.twitterClient.handleMessage(
-                    responseMessage
+                await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                    responseMessage.conversationId,
+                    responseMessage.content.text
                 );
             elizaLogger.log("jvb *************** :", jvb);
             elizaLogger.debug(`New request registered - ID: ${request.id}`);

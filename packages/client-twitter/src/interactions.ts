@@ -17,6 +17,7 @@ import {
 } from "@elizaos/core";
 import { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
+import { RuntimeWithTwitter } from "@elizaos/plugin-faytish";
 
 export const twitterMessageHandlerTemplate =
     `
@@ -94,7 +95,8 @@ export class TwitterInteractionClient {
         this.client = client;
         this.runtime = runtime;
 
-        this.runtime.twitterClient = this.client.twitterClient;
+        (this.runtime as RuntimeWithTwitter).twitterClient =
+            this.client.twitterClient;
     }
 
     async start() {
