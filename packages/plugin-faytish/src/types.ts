@@ -54,6 +54,8 @@ export interface RuntimeWithTwitter extends IAgentRuntime {
 
 export interface FetishRequest {
     id: string;
+    postId?: string;
+    winnerSelected?: boolean;
     userId: string;
     userScreenName: string;
     request: string;
