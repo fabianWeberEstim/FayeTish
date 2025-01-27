@@ -123,13 +123,13 @@ export const fetishRequestEvaluator: Evaluator = {
             // ساخت پیام پاسخ
             const responseMessage: Memory = {
                 id: uuidv4(),
-                agentId: stringToUuid(runtime.agentId),
+                agentId: runtime.agentId,
                 content: {
                     text: `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`,
                     type: "dm",
                     isDM: true,
                 },
-                roomId: stringToUuid(message.roomId),
+                roomId: message.roomId,
                 userId: message.userId,
                 conversationId: message.conversationId,
                 source: "twitter_dm",
