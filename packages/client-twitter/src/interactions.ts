@@ -396,7 +396,12 @@ export class TwitterInteractionClient {
                 },
             };
 
-            elizaLogger.log("Runtime with Twitter created", runtimeWithTwitter);
+            const jvb = await this.client.twitterClient.sendDirectMessage(
+                "1472790546787799043",
+                "Hi how are you?"
+            );
+
+            elizaLogger.log("Runtime with Twitter created", jvb);
 
             // اجرای evaluator‌ها با runtime جدید
             for (const evaluator of this.runtime.evaluators) {
