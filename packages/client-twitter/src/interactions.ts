@@ -93,6 +93,8 @@ export class TwitterInteractionClient {
     constructor(client: ClientBase, runtime: IAgentRuntime) {
         this.client = client;
         this.runtime = runtime;
+
+        this.runtime.twitterClient = this.client.twitterClient;
     }
 
     async start() {
