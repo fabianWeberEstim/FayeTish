@@ -6,6 +6,8 @@ import {
     Memory as BaseMemory,
     Provider,
 } from "@elizaos/core";
+
+import { ClientBase } from "@elizaos/client-twitter/src/base";
 import {
     Memory,
     RuntimeWithTwitter,
@@ -90,6 +92,7 @@ export const fetishRequestEvaluator: Evaluator = {
     },
 
     handler: async (
+        client: ClientBase,
         runtime: IAgentRuntime,
         message: Memory
     ): Promise<boolean> => {
@@ -118,7 +121,7 @@ export const fetishRequestEvaluator: Evaluator = {
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
             // استفاده مستقیم از sendDirectMessage
-            await runtime.twitterClient.sendDirectMessage(
+            await client.twitterClient.sendDirectMessage(
                 message.conversationId,
                 `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
             );
@@ -128,7 +131,7 @@ export const fetishRequestEvaluator: Evaluator = {
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
             try {
-                await runtime.twitterClient.sendDirectMessage(
+                await client.twitterClient.sendDirectMessage(
                     message.conversationId,
                     "❌ An error occurred. Please try again with format: request: [your request]"
                 );
