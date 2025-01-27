@@ -93,14 +93,7 @@ export const fetishRequestEvaluator: Evaluator = {
         runtime: IAgentRuntime,
         message: Memory
     ): Promise<boolean> => {
-        const runtimeWithTwitter = runtime as RuntimeWithTwitter;
-        elizaLogger.log("hellooo", runtimeWithTwitter.twitterClient);
         try {
-            if (!runtimeWithTwitter.twitterClient) {
-                elizaLogger.error("Twitter client not available");
-                return false;
-            }
-
             const requestMatch =
                 message.content.text.match(/^request:\s*(.+)/i);
             const requestText = requestMatch[1].trim();
@@ -113,8 +106,8 @@ export const fetishRequestEvaluator: Evaluator = {
                 timestamp: Date.now(),
                 isValid: true,
                 transactionId: "",
-                conversationId: message.content.conversationId,
-                userScreenName: message.content.senderScreenName,
+                conversationId: message.conversationId,
+                userScreenName: message.senderScreenName,
             };
 
             const requests =
@@ -123,21 +116,20 @@ export const fetishRequestEvaluator: Evaluator = {
                 )) || [];
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
-            elizaLogger.log("jvb", request);
-            // ارسال پیام با استفاده از conversationId ثابت
-            const jvb =
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    "1472790546787799043-1881796599787008000",
-                    `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
-                );
-            elizaLogger.log("jvb", jvb);
-            elizaLogger.log(`New request registered - ID: ${request.id}`);
+
+            // استفاده مستقیم از sendDirectMessage
+            await runtime.twitterClient.sendDirectMessage(
+                message.content.conversationId,
+                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
+            );
+
+            elizaLogger.debug(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
             try {
-                await runtimeWithTwitter.twitterClient?.sendDirectMessage(
-                    "1472790546787799043-1881796599787008000",
+                await runtime.twitterClient.sendDirectMessage(
+                    message.content.conversationId,
                     "❌ An error occurred. Please try again with format: request: [your request]"
                 );
             } catch (sendError) {
