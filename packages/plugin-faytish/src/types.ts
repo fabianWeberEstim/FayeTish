@@ -40,11 +40,7 @@ export interface ChallengePost {
 export interface TwitterClient {
     tweet: (text: string) => Promise<{ id: string }>;
     reply: (text: string, replyToId: string) => Promise<void>;
-    sendDirectMessage: (
-        userId: string,
-        text: string,
-        conversationId?: string
-    ) => Promise<void>;
+    sendDirectMessage: (conversationId: string, text: string) => Promise<void>;
 }
 
 export interface ExtendedMemory extends Memory {

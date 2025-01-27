@@ -372,22 +372,9 @@ export class TwitterInteractionClient {
                 ...this.runtime,
                 twitterClient: {
                     sendDirectMessage: async (
-                        userId: string,
-                        text: string,
-                        conversationId: string
+                        conversationId: string,
+                        text: string
                     ) => {
-                        if (!conversationId) {
-                            const dmsResponse = await this.client.getMs();
-                            const conversation = dmsResponse.conversations.find(
-                                (conv) =>
-                                    conv.participants.some(
-                                        (participant) =>
-                                            participant.id === userId
-                                    )
-                            );
-                            conversationId = conversation?.conversationId;
-                        }
-
                         await this.client.twitterClient.sendDirectMessage(
                             conversationId,
                             text
