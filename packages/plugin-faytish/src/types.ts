@@ -1,21 +1,11 @@
-import { IAgentRuntime, Memory as CoreMemory, Provider } from "@elizaos/core";
+import { IAgentRuntime, Memory as BaseMemory, Provider } from "@elizaos/core";
 
 interface Content {
     text: string;
 }
 
-// تعریف CoreMemory
-export interface CoreMemory {
-    userId: string;
-    roomId: string;
-    agentId: string;
-    type: string;
-    content: Content;
-    createdAt: number;
-}
-
-// گسترش Memory از CoreMemory
-export interface Memory extends CoreMemory {
+// گسترش Memory از BaseMemory
+export interface Memory extends BaseMemory {
     source?: string;
     displayName?: string;
     id?: `${string}-${string}-${string}-${string}-${string}`;
@@ -45,12 +35,10 @@ export interface ExtendedMemory extends Memory {
     displayName?: string;
 }
 
-// تغییر ساختار ExtendedRuntime به RuntimeWithTwitter
 export interface RuntimeWithTwitter extends IAgentRuntime {
     twitterClient?: TwitterClient;
 }
 
-// اضافه کردن interface جدید
 export interface FetishRequest {
     id: string;
     userId: string;
@@ -63,7 +51,6 @@ export interface FetishRequest {
     winnerSelected?: boolean;
 }
 
-// تعریف Provider
 export interface ExtendedProvider extends Provider {
     type: string;
 }
