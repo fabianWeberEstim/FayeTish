@@ -10,7 +10,7 @@ export interface Content {
     inReplyTo?: string;
     type?: string;
     isDM?: boolean;
-    conversationId?: string;
+    conversationId: string;
     senderId?: string;
     senderScreenName?: string;
 }

@@ -339,6 +339,7 @@ export class TwitterInteractionClient {
                         },
                         roomId,
                         userId,
+                        conversationId: `${message.senderId}-${message.recipientId}`,
                         source: "twitter_dm",
                         displayName: message.senderScreenName,
                         embedding: getEmbeddingZeroVector(),
@@ -367,64 +368,12 @@ export class TwitterInteractionClient {
             elizaLogger.log("=== Starting handleMessage ===");
             elizaLogger.log("Message:", JSON.stringify(message, null, 2));
 
-            // اضافه کردن twitterClient به runtime
-            const runtimeWithTwitter = {
-                ...this.runtime,
-                twitterClient: {
-                    sendDirectMessage: async (
-                        conversationId: string,
-                        text: string
-                    ) => {
-                        await this.client.twitterClient.sendDirectMessage(
-                            conversationId,
-                            text
-                        );
-                    },
-                },
-            };
-
-            // const jvb = await this.client.twitterClient.sendDirectMessage(
-            //     "1472790546787799043-1881796599787008000",
-            //     "Hi how are you?"
-            // );
+            const jvb = await this.client.twitterClient.sendDirectMessage(
+                message.content.conversationId,
+                message.content.text
+            );
 
             elizaLogger.log("Runtime with Twitter created");
-
-            // اجرای evaluator‌ها با runtime جدید
-            for (const evaluator of this.runtime.evaluators) {
-                elizaLogger.log(`Running evaluator: ${evaluator.name}`);
-                try {
-                    if (await evaluator.validate(runtimeWithTwitter, message)) {
-                        elizaLogger.log(
-                            `Evaluator ${evaluator.name} validated, running handler`
-                        );
-                        await evaluator.handler(runtimeWithTwitter, message);
-                    }
-                } catch (evalError) {
-                    elizaLogger.error(
-                        `Error in evaluator ${evaluator.name}:`,
-                        evalError
-                    );
-                }
-            }
-
-            // اجرای action‌ها با runtime جدید
-            for (const action of this.runtime.actions) {
-                elizaLogger.log(`Running action: ${action.name}`);
-                try {
-                    if (await action.validate(runtimeWithTwitter)) {
-                        elizaLogger.log(
-                            `Action ${action.name} validated, running handler`
-                        );
-                        await action.handler(runtimeWithTwitter);
-                    }
-                } catch (actionError) {
-                    elizaLogger.error(
-                        `Error in action ${action.name}:`,
-                        actionError
-                    );
-                }
-            }
         } catch (error) {
             elizaLogger.error("Error in handleMessage:", error);
             elizaLogger.error("Error stack:", error?.stack);
