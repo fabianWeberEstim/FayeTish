@@ -92,11 +92,11 @@ export const fetishRequestEvaluator: Evaluator = {
     },
 
     handler: async (
-        client: ClientBase,
         runtime: IAgentRuntime,
         message: Memory
     ): Promise<boolean> => {
         try {
+            const runtimeWithTwitter = runtime as RuntimeWithTwitter;
             const requestMatch =
                 message.content.text.match(/^request:\s*(.+)/i);
             const requestText = requestMatch[1].trim();
@@ -109,8 +109,8 @@ export const fetishRequestEvaluator: Evaluator = {
                 timestamp: Date.now(),
                 isValid: true,
                 transactionId: "",
-                conversationId: message.conversationId,
-                userScreenName: message.senderScreenName,
+                conversationId: message.content.conversationId,
+                userScreenName: message.content.senderScreenName,
             };
 
             const requests =
@@ -120,24 +120,30 @@ export const fetishRequestEvaluator: Evaluator = {
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
-            // استفاده مستقیم از sendDirectMessage
-            await client.twitterClient.sendDirectMessage(
-                message.conversationId,
-                `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`
+            // ساخت پیام پاسخ
+            const responseMessage: Memory = {
+                id: uuidv4(),
+                agentId: runtime.agentId,
+                content: {
+                    text: `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`,
+                    type: "dm",
+                    isDM: true,
+                },
+                roomId: message.roomId,
+                userId: message.userId,
+                conversationId: message.content.conversationId,
+                source: "twitter_dm",
+            };
+
+            // ارسال پیام با استفاده از handleMessage
+            await runtimeWithTwitter.twitterClient.handleMessage(
+                responseMessage
             );
 
             elizaLogger.debug(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
-            try {
-                await client.twitterClient.sendDirectMessage(
-                    message.conversationId,
-                    "❌ An error occurred. Please try again with format: request: [your request]"
-                );
-            } catch (sendError) {
-                elizaLogger.error("Error sending error message:", sendError);
-            }
             return false;
         }
     },
