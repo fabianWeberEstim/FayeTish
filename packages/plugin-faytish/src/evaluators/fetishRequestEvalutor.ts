@@ -122,7 +122,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
             // ساخت پیام پاسخ
             const responseMessage: Memory = {
-                id: uuidv4(),
+                id: stringToUuid(uuidv4()),
                 agentId: runtime.agentId,
                 content: {
                     text: `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`,
