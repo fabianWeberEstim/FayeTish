@@ -19,9 +19,9 @@ export type Memory = BaseMemory & {
     displayName?: string;
     id?: `${string}-${string}-${string}-${string}-${string}`;
     content: Content;
-    roomId: string;
-    userId: string;
-    agentId: string;
+    roomId?: string;
+    userId?: string;
+    agentId?: string;
     conversationId: string;
     senderScreenName?: string;
 };
