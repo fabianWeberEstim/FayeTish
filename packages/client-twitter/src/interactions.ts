@@ -401,7 +401,7 @@ export class TwitterInteractionClient {
             //     "Hi how are you?"
             // );
 
-            elizaLogger.log("Runtime with Twitter created", jvb);
+            elizaLogger.log("Runtime with Twitter created");
 
             // اجرای evaluator‌ها با runtime جدید
             for (const evaluator of this.runtime.evaluators) {
