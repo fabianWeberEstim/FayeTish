@@ -108,8 +108,8 @@ export const fetishRequestEvaluator: Evaluator = {
                 timestamp: Date.now(),
                 isValid: true,
                 transactionId: "",
-                conversationId: message.content.conversationId,
-                userScreenName: message.content.senderScreenName,
+                conversationId: message.conversationId,
+                userScreenName: message.senderScreenName,
             };
 
             const requests =
