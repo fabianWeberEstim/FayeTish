@@ -364,27 +364,64 @@ export class TwitterInteractionClient {
 
     private async handleMessage(message: Memory) {
         try {
+            elizaLogger.log("=== Starting handleMessage ===");
+            elizaLogger.log("Message:", JSON.stringify(message, null, 2));
+
             // اضافه کردن twitterClient به runtime
             const runtimeWithTwitter = {
                 ...this.runtime,
-                twitterClient: this.client,
+                twitterClient: {
+                    sendDirectMessage:
+                        this.client.twitterClient.sendDirectMessage.bind(
+                            this.client
+                        ),
+                },
             };
+
+            elizaLogger.log("Runtime with Twitter created");
 
             // اجرای evaluator‌ها با runtime جدید
             for (const evaluator of this.runtime.evaluators) {
-                if (await evaluator.validate(runtimeWithTwitter, message)) {
-                    await evaluator.handler(runtimeWithTwitter, message);
+                elizaLogger.log(`Running evaluator: ${evaluator.name}`);
+                try {
+                    if (await evaluator.validate(runtimeWithTwitter, message)) {
+                        elizaLogger.log(
+                            `Evaluator ${evaluator.name} validated, running handler`
+                        );
+                        await evaluator.handler(runtimeWithTwitter, message);
+                    }
+                } catch (evalError) {
+                    elizaLogger.error(
+                        `Error in evaluator ${evaluator.name}:`,
+                        evalError
+                    );
                 }
             }
 
             // اجرای action‌ها با runtime جدید
             for (const action of this.runtime.actions) {
-                if (await action.validate(runtimeWithTwitter)) {
-                    await action.handler(runtimeWithTwitter);
+                elizaLogger.log(`Running action: ${action.name}`);
+                try {
+                    if (await action.validate(runtimeWithTwitter)) {
+                        elizaLogger.log(
+                            `Action ${action.name} validated, running handler`
+                        );
+                        await action.handler(runtimeWithTwitter);
+                    }
+                } catch (actionError) {
+                    elizaLogger.error(
+                        `Error in action ${action.name}:`,
+                        actionError
+                    );
                 }
             }
         } catch (error) {
             elizaLogger.error("Error in handleMessage:", error);
+            elizaLogger.error("Error stack:", error?.stack);
+            elizaLogger.error(
+                "Full error details:",
+                JSON.stringify(error, null, 2)
+            );
         }
     }
 
