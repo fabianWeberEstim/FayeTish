@@ -304,6 +304,8 @@ export class TwitterInteractionClient {
             // دریافت دایرکت مسیج‌های جدید
             const messages = await this.client.getMs();
 
+            elizaLogger.log("all DMS: ", messages);
+
             for (const dm of messages) {
                 // چک کردن پیام‌های پردازش نشده
                 const isDMProcessed = await this.runtime.cacheManager.get(
