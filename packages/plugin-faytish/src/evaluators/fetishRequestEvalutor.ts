@@ -21,7 +21,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
     validate: async (
         runtime: IAgentRuntime,
-        message: CoreMemory
+        message: Memory
     ): Promise<boolean> => {
         try {
             if (!message.source || message.source !== "twitter_dm") {
@@ -43,7 +43,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
     handler: async (
         runtime: IAgentRuntime,
-        message: CoreMemory
+        message: Memory
     ): Promise<boolean> => {
         try {
             const runtimeWithTwitter = runtime as RuntimeWithTwitter;
@@ -80,7 +80,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            const txMemory: CoreMemory = {
+            const txMemory: Memory = {
                 userId: message.userId,
                 roomId: message.roomId,
                 content: { text: transactionId || "" },
