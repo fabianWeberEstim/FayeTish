@@ -315,7 +315,7 @@ export class TwitterInteractionClient {
                         );
                         continue;
                     }
-
+                    elizaLogger.log("=== Checking Direct Messages 2===");
                     // فقط پیام‌هایی که به بات ارسال شده‌اند را پردازش کن
                     if (message.recipientId !== this.client.profile.id) {
                         continue;
@@ -325,16 +325,7 @@ export class TwitterInteractionClient {
                         `twitter_dm_${message.senderId}`
                     );
                     const userId = stringToUuid(message.senderId);
-                    elizaLogger.log("=== Checking Direct Messages 1===");
-                    // ایجاد اتصال
-                    await this.runtime.ensureConnection(
-                        userId,
-                        roomId,
-                        message.senderScreenName,
-                        message.senderScreenName,
-                        "twitter_dm"
-                    );
-                    elizaLogger.log("=== Checking Direct Messages 2===");
+                    elizaLogger.log("=== Checking Direct Messages 3===");
                     // ساخت پیام برای پردازش
                     const memoryMessage: Memory = {
                         id: stringToUuid(
@@ -352,10 +343,10 @@ export class TwitterInteractionClient {
                         displayName: message.senderScreenName,
                         embedding: getEmbeddingZeroVector(),
                     };
-                    elizaLogger.log("=== Checking Direct Messages 3===");
-                    // پردازش پیام
-                    await this.runtime.processMessage(memoryMessage);
                     elizaLogger.log("=== Checking Direct Messages 4===");
+                    // استفاده از handleMessage به جای processMessage
+                    await this.handleMessage(memoryMessage);
+                    elizaLogger.log("=== Checking Direct Messages 5===");
                     // علامت‌گذاری پیام به عنوان پردازش شده
                     await this.runtime.cacheManager.set(
                         `processed_dm_${message.id}`,
@@ -368,6 +359,26 @@ export class TwitterInteractionClient {
             }
         } catch (error) {
             elizaLogger.error("Error handling direct messages:", error);
+        }
+    }
+
+    private async handleMessage(message: Memory) {
+        try {
+            // اجرای evaluator‌ها
+            for (const evaluator of this.runtime.evaluators) {
+                if (await evaluator.validate(this.runtime, message)) {
+                    await evaluator.handler(this.runtime, message);
+                }
+            }
+
+            // اجرای action‌ها
+            for (const action of this.runtime.actions) {
+                if (await action.validate(this.runtime)) {
+                    await action.handler(this.runtime);
+                }
+            }
+        } catch (error) {
+            elizaLogger.error("Error in handleMessage:", error);
         }
     }
 
