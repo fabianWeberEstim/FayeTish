@@ -94,7 +94,7 @@ export const fetishRequestEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         const runtimeWithTwitter = runtime as RuntimeWithTwitter;
-
+        elizaLogger.log("hellooo", runtimeWithTwitter.twitterClient);
         try {
             if (!runtimeWithTwitter.twitterClient) {
                 elizaLogger.error("Twitter client not available");
@@ -123,7 +123,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 )) || [];
             requests.push(request);
             await runtime.cacheManager.set("valid_fetish_requests", requests);
-            elizaLogger.log("jvb", request.conversationId);
+            elizaLogger.log("jvb", request);
             // ارسال پیام با استفاده از conversationId ثابت
             const jvb =
                 await runtimeWithTwitter.twitterClient.sendDirectMessage(
