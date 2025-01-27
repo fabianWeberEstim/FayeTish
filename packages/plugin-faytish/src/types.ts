@@ -1,14 +1,11 @@
 import { IAgentRuntime, Memory as CoreMemory } from "@elizaos/core";
 
-// گسترش Memory
-export interface Memory {
-    userId: string;
-    roomId: string;
+// گسترش Memory از CoreMemory
+export interface Memory extends CoreMemory {
+    source: string;
     content: {
         text?: string;
     };
-    createdAt: number;
-    source: string;
     displayName?: string;
 }
 
@@ -52,4 +49,9 @@ export interface FetishRequest {
     postId?: string;
     transactionId: string;
     winnerSelected?: boolean;
+}
+
+export interface Provider {
+    type: string;
+    get: (runtime: IAgentRuntime, memory: Memory) => Promise<any>;
 }
