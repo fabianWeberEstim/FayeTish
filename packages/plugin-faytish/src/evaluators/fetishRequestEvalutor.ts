@@ -23,25 +23,42 @@ interface SolanaTransaction {
 export const fetishRequestEvaluator: Evaluator = {
     name: "fetishRequestEvaluator",
     description: "Evaluates new fetish requests from Twitter DMs",
-    similes: ["CHECK_REQUEST", "VALIDATE_REQUEST"],
+    similes: [
+        "CHECK_REQUEST",
+        "VALIDATE_REQUEST",
+        "DM_REQUEST",
+        "DIRECT_MESSAGE",
+    ],
 
     validate: async (
         runtime: IAgentRuntime,
         message: BaseMemory
     ): Promise<boolean> => {
         try {
+            elizaLogger.debug("Validating message:", message);
+
             const extendedMessage = message as Memory;
             if (
-                !extendedMessage.source ||
-                extendedMessage.source !== "twitter_dm"
+                extendedMessage.content.type !== "twitter_dm" &&
+                extendedMessage.source !== "twitter_dm" &&
+                !extendedMessage.content.isDM
             ) {
+                elizaLogger.debug("Message is not from Twitter DM");
                 return false;
             }
 
-            return (
-                message.content.text?.includes("request:") &&
-                message.content.text?.includes("transaction:")
+            const hasRequest = message.content.text
+                ?.toLowerCase()
+                .includes("request:");
+            const hasTransaction = message.content.text
+                ?.toLowerCase()
+                .includes("transaction:");
+
+            elizaLogger.debug(
+                `Message validation - hasRequest: ${hasRequest}, hasTransaction: ${hasTransaction}`
             );
+
+            return hasRequest && hasTransaction;
         } catch (error) {
             elizaLogger.error(
                 "Error in fetishRequestEvaluator validate:",
@@ -62,6 +79,8 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
+            elizaLogger.debug("Processing DM request:", message);
+
             const text = message.content.text;
             const requestMatch = text.match(
                 /request:\s*(.+?)(?=\s*transaction:|$)/i
@@ -77,6 +96,18 @@ export const fetishRequestEvaluator: Evaluator = {
             }
 
             const transactionId = transactionMatch[1];
+            const requestText = requestMatch[1].trim();
+
+            elizaLogger.debug(`Received request: ${requestText}`);
+            elizaLogger.debug(`Transaction ID: ${transactionId}`);
+
+            if (requestText.length < 10) {
+                await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                    message.userId,
+                    `❌ Your request is too short! Please provide more details.`
+                );
+                return false;
+            }
 
             const solanaProvider = runtime.providers.find(
                 (p) => (p as ExtendedProvider).type === "solanaProvider"
@@ -114,7 +145,7 @@ export const fetishRequestEvaluator: Evaluator = {
             const request: FetishRequest = {
                 id: uuidv4(),
                 userId: message.userId,
-                request: requestMatch[1].trim(),
+                request: requestText,
                 bountyAmount: transaction.amount,
                 timestamp: Date.now(),
                 isValid: true,
@@ -129,14 +160,6 @@ export const fetishRequestEvaluator: Evaluator = {
                 return false;
             }
 
-            if (request.request.length < 10) {
-                await runtimeWithTwitter.twitterClient.sendDirectMessage(
-                    message.userId,
-                    `❌ Request description is too short! Please provide more details.`
-                );
-                return false;
-            }
-
             const requests =
                 (await runtime.cacheManager.get<FetishRequest[]>(
                     "valid_fetish_requests"
@@ -147,12 +170,23 @@ export const fetishRequestEvaluator: Evaluator = {
             const confirmationLink = `https://solscan.io/tx/${transactionId}`;
             await runtimeWithTwitter.twitterClient.sendDirectMessage(
                 message.userId,
-                `✅ Your request has been validated!\n\nTransaction: ${confirmationLink}\nRequest ID: ${request.id}\n\nYour request will be posted soon!`
+                `✅ Processing your request...\nTransaction ID: ${transactionId}\n\nPlease wait while we verify your transaction.`
             );
 
             return true;
         } catch (error) {
             elizaLogger.error("Error processing fetish request:", error);
+
+            try {
+                const runtimeWithTwitter = runtime as RuntimeWithTwitter;
+                await runtimeWithTwitter.twitterClient?.sendDirectMessage(
+                    message.userId,
+                    `❌ An error occurred while processing your request. Please try again later.`
+                );
+            } catch (dmError) {
+                elizaLogger.error("Error sending error DM:", dmError);
+            }
+
             return false;
         }
     },
@@ -165,7 +199,8 @@ export const fetishRequestEvaluator: Evaluator = {
                     user: "{{user1}}",
                     content: {
                         text: "request: Show feet with red nail polish\ntransaction: 5KjdKMWvJu2xCAQXxS2vpkib79x",
-                        source: "twitter_dm",
+                        type: "twitter_dm",
+                        isDM: true,
                     },
                 },
             ],

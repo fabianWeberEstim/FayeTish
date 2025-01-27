@@ -1,6 +1,6 @@
 import { IAgentRuntime, Memory as BaseMemory, Provider } from "@elizaos/core";
 
-interface Content {
+export interface Content {
     text: string;
     tweetId?: string;
     media?: Array<{
@@ -8,13 +8,20 @@ interface Content {
         type: string;
     }>;
     inReplyTo?: string;
+    type?: string;
+    isDM?: boolean;
 }
 
 // گسترش Memory از BaseMemory
-export interface Memory extends BaseMemory {
+export interface Memory {
+    userId: string;
+    roomId: string;
+    agentId: string;
+    content: Content;
     source?: string;
     displayName?: string;
     id?: `${string}-${string}-${string}-${string}-${string}`;
+    createdAt: number;
 }
 
 export interface FootSubmission {
