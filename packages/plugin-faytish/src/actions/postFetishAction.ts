@@ -1,23 +1,69 @@
 import {
+    Action,
     IAgentRuntime,
     Memory,
     State,
     elizaLogger,
     HandlerCallback,
     ActionExample,
-    type Action,
 } from "@elizaos/core";
 import { FetishRequest } from "../types";
-import TwitterPostClient from "@elizaos/client-twitter";
+import { Scraper } from "agent-twitter-client";
+
+async function postFetishTweet(content: string): Promise<{ id: string }> {
+    const scraper = new Scraper();
+    const username = process.env.TWITTER_USERNAME;
+    const password = process.env.TWITTER_PASSWORD;
+    const email = process.env.TWITTER_EMAIL;
+    const twitter2faSecret = process.env.TWITTER_2FA_SECRET;
+
+    if (!username || !password) {
+        elizaLogger.error("Twitter credentials not configured in environment");
+        throw new Error("Twitter credentials not configured");
+    }
+
+    await scraper.login(username, password, email, twitter2faSecret);
+    if (!(await scraper.isLoggedIn())) {
+        elizaLogger.error("Failed to login to Twitter");
+        throw new Error("Failed to login to Twitter");
+    }
+
+    elizaLogger.log("Attempting to send tweet:", content);
+    const result = await scraper.sendTweet(content);
+
+    const body = await result.json();
+    elizaLogger.log("Tweet response:", body);
+
+    if (body.errors) {
+        const error = body.errors[0];
+        elizaLogger.error(
+            `Twitter API error (${error.code}): ${error.message}`
+        );
+        throw new Error(`Twitter API error: ${error.message}`);
+    }
+
+    if (!body?.data?.create_tweet?.tweet_results?.result) {
+        elizaLogger.error("Failed to post tweet: No tweet result in response");
+        throw new Error("Failed to post tweet: No tweet result in response");
+    }
+
+    return { id: body.data.create_tweet.tweet_results.result.rest_id };
+}
 
 export const postFetishAction: Action = {
     name: "POST_FETISH_REQUEST",
     similes: ["POST_REQUEST", "MAKE_POST"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating fetish post from user:", message.userId);
-        return true;
-    },
     description: "Posts a fetish request from the queue",
+    validate: async (
+        runtime: IAgentRuntime,
+        message: Memory
+    ): Promise<boolean> => {
+        const hasCredentials =
+            !!process.env.TWITTER_USERNAME && !!process.env.TWITTER_PASSWORD;
+        elizaLogger.log(`Has credentials: ${hasCredentials}`);
+
+        return hasCredentials;
+    },
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -28,7 +74,6 @@ export const postFetishAction: Action = {
         elizaLogger.log("Starting POST_FETISH_REQUEST handler...");
 
         try {
-            // دریافت درخواست‌های معتبر از کش
             const requests = await runtime.cacheManager.get<FetishRequest[]>(
                 "valid_fetish_requests",
                 []
@@ -42,12 +87,7 @@ export const postFetishAction: Action = {
             ) {
                 const request = requests.find((req) => !req.postId);
                 if (request) {
-                    // استفاده از TwitterPostClient برای ارسال توییت
-                    const twitterClient = new TwitterPostClient(runtime);
-                    const postResult = await twitterClient.postTweet(
-                        request.request
-                    );
-
+                    const postResult = await postFetishTweet(request.request);
                     request.postId = postResult.id;
                     request.timestamp = Date.now();
                     await runtime.cacheManager.set(
@@ -62,12 +102,7 @@ export const postFetishAction: Action = {
             else if (!lastPostedRequest) {
                 const request = requests.find((req) => !req.postId);
                 if (request) {
-                    // استفاده از TwitterPostClient برای ارسال توییت
-                    const twitterClient = new TwitterPostClient(runtime);
-                    const postResult = await twitterClient.postTweet(
-                        request.request
-                    );
-
+                    const postResult = await postFetishTweet(request.request);
                     request.postId = postResult.id;
                     request.timestamp = Date.now();
                     await runtime.cacheManager.set(
@@ -89,9 +124,7 @@ export const postFetishAction: Action = {
         [
             {
                 user: "{{user1}}",
-                content: {
-                    text: "Post the next fetish request",
-                },
+                content: { text: "Post the next fetish request" },
             },
             {
                 user: "{{user2}}",
