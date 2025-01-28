@@ -8,7 +8,7 @@ import {
     type Action,
 } from "@elizaos/core";
 import { FetishRequest } from "../types";
-import { TwitterPostClient } from "../clients/TwitterPostClient";
+import { TwitterPostClient } from "@elizaos/client-twitter";
 
 export const postFetishAction: Action = {
     name: "POST_FETISH_REQUEST",
