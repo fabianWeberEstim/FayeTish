@@ -65,7 +65,6 @@ async function validateRequest(
 
     const context = composeContext({
         template: requestValidationTemplate,
-        ...state,
         requestText,
     });
 
