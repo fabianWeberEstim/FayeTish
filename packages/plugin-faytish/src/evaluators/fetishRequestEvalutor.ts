@@ -2,9 +2,14 @@ import {
     Evaluator,
     IAgentRuntime,
     elizaLogger,
+    booleanFooter,
+    composeContext,
     ActionExample,
     Memory as BaseMemory,
     Provider,
+    generateObjectArray,
+    generateTrueOrFalse,
+    ModelClass,
     stringToUuid,
 } from "@elizaos/core";
 
@@ -16,30 +21,20 @@ import {
 } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
-const requestTemplate = `
-TASK: Validate fetish request from Twitter DM.
+const requestValidationTemplate =
+    `
+TASK: Validate if the request is related to feet style or appearance.
 
-Request Format:
-- Must start with "request:"
-- Must include transaction ID
-- Must be related to feet/nails content
-- Must be appropriate and clear
+Look for requests that:
+- Mention specific style or appearance keywords
+- Contain words related to feet, nails, or toes
+- Express clear requirements about style or appearance
 
-Please validate:
-1. Format Validation
-- Correct request format
-- Valid transaction ID
-- Clear description
+Based on the following request, is it related to feet style or appearance? YES or NO
 
-2. Content Validation
-- Related to feet/nails
-- Appropriate content
-- Clear requirements
-
-3. Request Details:
 {{request}}
-Transaction: {{transaction}}
-`;
+
+Is the request related to feet style or appearance? ` + booleanFooter;
 
 interface RequestValidation {
     isValid: boolean;
@@ -56,13 +51,37 @@ interface TwitterDMContent {
     senderScreenName: string;
 }
 
-function validateRequest(text: string): boolean {
+async function validateRequest(
+    runtime: IAgentRuntime,
+    text: string,
+    conversationId: string
+): Promise<boolean> {
     const requestMatch = text.toLowerCase().match(/^request:\s*(.+)/i);
     if (!requestMatch) return false;
 
-    const requestText = requestMatch[1].trim().toLowerCase();
-    const validKeywords = ["feet", "foot", "nails", "toes"];
-    return validKeywords.some((keyword) => requestText.includes(keyword));
+    const requestText = requestMatch[1].trim();
+
+    const context = composeContext({
+        template: requestValidationTemplate,
+        params: {
+            request: requestText,
+        },
+    });
+
+    const isStyleRelated = await generateTrueOrFalse({
+        context,
+        modelClass: ModelClass.SMALL,
+        runtime,
+    });
+
+    if (!isStyleRelated) {
+        await runtime.twitterClient.sendDirectMessage(
+            conversationId,
+            "⚠️ We only accept requests related to feet style or appearance. Please modify your request to include style-related keywords."
+        );
+    }
+
+    return isStyleRelated;
 }
 
 export const fetishRequestEvaluator: Evaluator = {
@@ -83,7 +102,11 @@ export const fetishRequestEvaluator: Evaluator = {
             const extendedMessage = message as Memory;
             return (
                 extendedMessage.content.isDM &&
-                validateRequest(message.content.text)
+                validateRequest(
+                    runtime,
+                    message.content.text,
+                    message.conversationId
+                )
             );
         } catch (error) {
             elizaLogger.error("Error in validate:", error);
@@ -179,7 +202,7 @@ export const fetishRequestEvaluator: Evaluator = {
                     responseMessage.conversationId,
                     responseMessage.content.text
                 );
-            elizaLogger.log("jvb ****************** ", jvb);
+
             elizaLogger.log(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {

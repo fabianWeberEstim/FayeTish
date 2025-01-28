@@ -335,10 +335,7 @@ export class TwitterInteractionClient {
 
                     // ارسال پیام به evaluator
                     await this.runtime.evaluateMessage(memoryMessage);
-                    elizaLogger.log(
-                        "memoryMessage ***************** ",
-                        memoryMessage
-                    );
+
                     await this.runtime.cacheManager.set(
                         `processed_dm_${message.id}`,
                         true
