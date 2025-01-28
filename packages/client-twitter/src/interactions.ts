@@ -335,7 +335,10 @@ export class TwitterInteractionClient {
 
                     // ارسال پیام به evaluator
                     await this.runtime.evaluateMessage(memoryMessage);
-
+                    elizaLogger.log(
+                        "memoryMessage ***************** ",
+                        memoryMessage
+                    );
                     await this.runtime.cacheManager.set(
                         `processed_dm_${message.id}`,
                         true
@@ -347,26 +350,26 @@ export class TwitterInteractionClient {
         }
     }
 
-    // async handleMessage(message: Memory) {
-    //     try {
-    //         elizaLogger.log("=== Starting handleMessage ===");
-    //         elizaLogger.log("Message:", JSON.stringify(message, null, 2));
+    async handleMessage(message: Memory) {
+        try {
+            elizaLogger.log("=== Starting handleMessage ===");
+            elizaLogger.log("Message:", JSON.stringify(message, null, 2));
 
-    //         const jvb = await this.client.twitterClient.sendDirectMessage(
-    //             message.conversationId,
-    //             message.content.text
-    //         );
+            const jvb = await this.client.twitterClient.sendDirectMessage(
+                message.conversationId,
+                message.content.text
+            );
 
-    //         elizaLogger.log("Runtime with Twitter created");
-    //     } catch (error) {
-    //         elizaLogger.error("Error in handleMessage:", error);
-    //         elizaLogger.error("Error stack:", error?.stack);
-    //         elizaLogger.error(
-    //             "Full error details:",
-    //             JSON.stringify(error, null, 2)
-    //         );
-    //     }
-    // }
+            elizaLogger.log("Runtime with Twitter created");
+        } catch (error) {
+            elizaLogger.error("Error in handleMessage:", error);
+            elizaLogger.error("Error stack:", error?.stack);
+            elizaLogger.error(
+                "Full error details:",
+                JSON.stringify(error, null, 2)
+            );
+        }
+    }
 
     private async handleTweet({
         tweet,
