@@ -19,6 +19,8 @@ export const chooseFetishPicAction: Action = {
                 (await runtime.cacheManager.get<FetishRequest[]>(
                     "valid_fetish_requests"
                 )) || [];
+
+            elizaLogger.log("lott action ************************ ", requests);
             const activeRequests = requests.filter((req) => {
                 if (!req.postId) return false;
                 const hoursSincePost =
@@ -69,7 +71,10 @@ export const chooseFetishPicAction: Action = {
                 if (hoursSincePost < 24) continue;
 
                 const requestSubmissions = submissions[request.id] || [];
-                if (requestSubmissions.length === 0) continue;
+                if (requestSubmissions.length === 0) {
+                    elizaLogger.log(`No submissions for request ${request.id}`);
+                    continue;
+                }
 
                 // انتخاب برنده تصادفی
                 const winner =
@@ -79,9 +84,6 @@ export const chooseFetishPicAction: Action = {
 
                 const replyText = `🎉 Congratulations @${winner.displayName}!\n\nYou've won ${request.bountyAmount} tokens for request #${request.id}!\n\nPlease DM your wallet address to claim your prize! 🎁`;
 
-                elizaLogger.log(
-                    `Selected winner for request ${request.id}: ${winner.displayName}`
-                );
                 await runtimeWithTwitter.twitterClient.reply(
                     replyText,
                     winner.tweetId
@@ -99,6 +101,10 @@ export const chooseFetishPicAction: Action = {
                 await runtime.cacheManager.set(
                     "submissions_by_request",
                     submissions
+                );
+
+                elizaLogger.log(
+                    `Selected winner for request ${request.id}: ${winner.displayName}`
                 );
             }
         } catch (error) {
