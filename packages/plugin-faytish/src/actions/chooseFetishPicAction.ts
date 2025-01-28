@@ -20,12 +20,11 @@ export const chooseFetishPicAction: Action = {
                     "valid_fetish_requests"
                 )) || [];
 
-            elizaLogger.log("lott action ************************ ", requests);
             const activeRequests = requests.filter((req) => {
-                if (!req.postId) return false;
+                if (!req.postId || req.winnerSelected) return false;
                 const hoursSincePost =
                     (Date.now() - req.timestamp) / (1000 * 60 * 60);
-                return hoursSincePost >= 24 && !req.winnerSelected;
+                return hoursSincePost >= 24; // فقط درخواست‌هایی که 24 ساعت گذشته‌اند
             });
 
             if (activeRequests.length === 0) {

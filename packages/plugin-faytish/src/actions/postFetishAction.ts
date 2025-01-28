@@ -53,8 +53,9 @@ export const postFetishAction: Action = {
             const tweet =
                 await runtimeWithTwitter.twitterClient.tweet(tweetText);
 
-            // بروزرسانی درخواست با شناسه پست
+            // بروزرسانی درخواست با شناسه پست و زمان ارسال
             nextRequest.postId = tweet.id;
+            nextRequest.timestamp = Date.now(); // زمان فعلی را ذخیره کنید
             await runtime.cacheManager.set("valid_fetish_requests", requests);
 
             elizaLogger.log(
