@@ -13,13 +13,7 @@ export * as providers from "./providers";
 export const fayetishPlugin: Plugin = {
     name: "fayetish",
     description: "Plugin for fetish request and submission management",
-    actions: [
-        postFetishAction,
-        chooseFetishPicAction
-    ],
-    evaluators: [
-        fetishRequestEvaluator,
-        fetishPicEvaluator
-    ],
-    providers: [userSubmissionProvider]
+    actions: [postFetishAction, chooseFetishPicAction],
+    evaluators: [fetishRequestEvaluator, fetishPicEvaluator],
+    providers: [userSubmissionProvider],
 };
