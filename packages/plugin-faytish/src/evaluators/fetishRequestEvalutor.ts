@@ -56,6 +56,7 @@ async function validateRequest(
     text: string,
     conversationId: string
 ): Promise<boolean> {
+    const runtimeWithTwitter = runtime as RuntimeWithTwitter;
     const requestMatch = text.toLowerCase().match(/^request:\s*(.+)/i);
     if (!requestMatch) return false;
 
@@ -63,7 +64,7 @@ async function validateRequest(
 
     const context = composeContext({
         template: requestValidationTemplate,
-        params: {
+        state: {
             request: requestText,
         },
     });
@@ -75,7 +76,7 @@ async function validateRequest(
     });
 
     if (!isStyleRelated) {
-        await runtime.twitterClient.sendDirectMessage(
+        await runtimeWithTwitter.twitterClient.sendDirectMessage(
             conversationId,
             "⚠️ We only accept requests related to feet style or appearance. Please modify your request to include style-related keywords."
         );
@@ -96,7 +97,7 @@ export const fetishRequestEvaluator: Evaluator = {
 
     validate: async (
         runtime: IAgentRuntime,
-        message: BaseMemory
+        message: Memory
     ): Promise<boolean> => {
         try {
             const extendedMessage = message as Memory;
