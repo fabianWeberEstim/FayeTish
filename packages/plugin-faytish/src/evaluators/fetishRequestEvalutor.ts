@@ -65,7 +65,7 @@ async function validateRequest(
 
     const context = composeContext({
         template: requestValidationTemplate,
-        requestText,
+        state: requestText,
     });
 
     const isStyleRelated = await generateTrueOrFalse({
