@@ -65,7 +65,18 @@ async function validateRequest(
 
     const context = composeContext({
         template: requestValidationTemplate,
-        state: requestText,
+        state: {
+            ...state,
+            requestText,
+            bio: "A bot that handles fetish requests related to feet style and appearance.",
+            lore: "This bot is designed to manage and validate requests related to feet style and appearance.",
+            messageDirections:
+                "Please ensure your request is clear and related to feet style or appearance.",
+            postDirections:
+                "Post your request starting with 'request:' followed by your detailed description.",
+            knowledge:
+                "This bot specializes in handling requests related to feet style, appearance, and related topics.",
+        },
     });
 
     const isStyleRelated = await generateTrueOrFalse({
