@@ -75,8 +75,7 @@ export const postFetishAction: Action = {
 
         try {
             const requests = await runtime.cacheManager.get<FetishRequest[]>(
-                "valid_fetish_requests",
-                []
+                "valid_fetish_requests"
             );
             const lastPostedRequest = requests.find((req) => req.postId);
 
