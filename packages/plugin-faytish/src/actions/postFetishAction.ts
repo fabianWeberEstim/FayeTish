@@ -12,6 +12,39 @@ export const postFetishAction: Action = {
     description: "Posts fetish request from queue",
     similes: ["POST_REQUEST", "MAKE_POST"],
 
+    initialize: async (runtime: IAgentRuntime) => {
+        setInterval(async () => {
+            try {
+                const requests =
+                    (await runtime.cacheManager.get<FetishRequest[]>(
+                        "valid_fetish_requests"
+                    )) || [];
+                const lastPostedRequest = requests.find((req) => req.postId);
+
+                // اگر آخرین پست وجود دارد و از زمان آن 6 ساعت گذشته است
+                if (
+                    lastPostedRequest &&
+                    Date.now() - lastPostedRequest.timestamp >=
+                        6 * 60 * 60 * 1000
+                ) {
+                    const shouldPost = await postFetishAction.validate(runtime);
+                    if (shouldPost) {
+                        await postFetishAction.handler(runtime);
+                    }
+                }
+                // اگر هیچ پستی قبلا ارسال نشده است
+                else if (!lastPostedRequest) {
+                    const shouldPost = await postFetishAction.validate(runtime);
+                    if (shouldPost) {
+                        await postFetishAction.handler(runtime);
+                    }
+                }
+            } catch (error) {
+                elizaLogger.error("Error in scheduled post:", error);
+            }
+        }, 60 * 1000); // هر 1 دقیقه چک کن (برای دقت بیشتر)
+    },
+
     validate: async (runtime: IAgentRuntime): Promise<boolean> => {
         try {
             // چک کردن درخواست‌های معتبر در صف
