@@ -47,7 +47,7 @@ async function postFetishTweet(content: string): Promise<{ id: string }> {
         throw new Error("Failed to post tweet: No tweet result in response");
     }
 
-    return { id: body.data.create_tweet.tweet_results.result.rest_id };
+    return { id: body?.data?.create_tweet?.tweet_results?.result.rest_id };
 }
 
 export const postFetishAction: Action = {

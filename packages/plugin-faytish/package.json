@@ -20,7 +20,7 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
-        "@elizaos/client-twitter": "workspace:*",
+        "agent-twitter-client": "0.0.17",
         "tsup": "8.3.5"
     },
     "scripts": {
