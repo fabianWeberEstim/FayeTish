@@ -74,7 +74,6 @@ import { fileURLToPath } from "url";
 import yargs from "yargs";
 import net from "net";
 
-
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
@@ -370,7 +369,9 @@ async function initializeDatabase(dataDir: string) {
 
         try {
             await db.init();
-            elizaLogger.success("Successfully connected to PostgreSQL database");
+            elizaLogger.success(
+                "Successfully connected to PostgreSQL database"
+            );
             return db;
         } catch (error) {
             elizaLogger.error("Failed to connect to PostgreSQL:", error);
@@ -536,7 +537,7 @@ export async function createAgent(
         evaluators: [],
         character,
         // character.plugins are handled when clients are added
-        plugins: [bootstrapPlugin, nodePlugin, twitterPlugin, fayetishPlugin].filter(Boolean),
+        plugins: [fayetishPlugin].filter(Boolean),
         providers: [],
         actions: [],
         services: [],
@@ -613,7 +614,7 @@ async function startAgent(
             fs.mkdirSync(dataDir, { recursive: true });
         }
 
-        db = await initializeDatabase(dataDir) as IDatabaseAdapter &
+        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter &
             IDatabaseCacheAdapter;
 
         const cache = initializeCache(
