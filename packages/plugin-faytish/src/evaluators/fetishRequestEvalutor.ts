@@ -101,6 +101,39 @@ export const fetishRequestEvaluator: Evaluator = {
                 message.content.text.match(/^request:\s*(.+)/i);
             const requestText = requestMatch[1].trim();
 
+            // Check user's previous requests
+            const userRequests =
+                (await runtime.cacheManager.get<FetishRequest[]>(
+                    `user_requests_${message.userId}`
+                )) || [];
+
+            // If user has sent a request in the last 6 hours
+            const lastRequest = userRequests[userRequests.length - 1];
+            if (
+                lastRequest &&
+                Date.now() - lastRequest.timestamp < 6 * 60 * 60 * 1000
+            ) {
+                const responseMessage: Memory = {
+                    id: stringToUuid(uuidv4()),
+                    agentId: runtime.agentId,
+                    content: {
+                        text: `⏳ You have already submitted a request. Please wait 6 hours before submitting a new one.`,
+                        type: "dm",
+                        isDM: true,
+                    },
+                    roomId: stringToUuid(`twitter_dm_${message.userId}`),
+                    userId: message.userId,
+                    conversationId: message.conversationId,
+                    source: "twitter_dm",
+                };
+
+                await runtimeWithTwitter.twitterClient.sendDirectMessage(
+                    responseMessage.conversationId,
+                    responseMessage.content.text
+                );
+                return false;
+            }
+
             const request: FetishRequest = {
                 id: uuidv4(),
                 userId: message.userId,
@@ -113,6 +146,13 @@ export const fetishRequestEvaluator: Evaluator = {
                 userScreenName: message.senderScreenName,
             };
 
+            // Save user's request
+            userRequests.push(request);
+            await runtime.cacheManager.set(
+                `user_requests_${message.userId}`,
+                userRequests
+            );
+
             const requests =
                 (await runtime.cacheManager.get<FetishRequest[]>(
                     "valid_fetish_requests"
@@ -124,7 +164,7 @@ export const fetishRequestEvaluator: Evaluator = {
                 id: stringToUuid(uuidv4()),
                 agentId: runtime.agentId,
                 content: {
-                    text: `✅ Request Accepted!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ Your request will be posted soon.`,
+                    text: `✅ Your request has been saved!\n\n🔍 ID: ${request.id}\n📝 Request: ${requestText}\n\n⏳ You can submit a new request after 6 hours.`,
                     type: "dm",
                     isDM: true,
                 },
@@ -133,18 +173,14 @@ export const fetishRequestEvaluator: Evaluator = {
                 conversationId: message.conversationId,
                 source: "twitter_dm",
             };
-            elizaLogger.log(
-                "responseMessage *************** :",
-                responseMessage
-            );
-            // ارسال پیام با استفاده از handleMessage
+
             const jvb =
                 await runtimeWithTwitter.twitterClient.sendDirectMessage(
                     responseMessage.conversationId,
                     responseMessage.content.text
                 );
-            elizaLogger.log("jvb *************** :", jvb);
-            elizaLogger.debug(`New request registered - ID: ${request.id}`);
+            elizaLogger.log("jvb ****************** ", jvb);
+            elizaLogger.log(`New request registered - ID: ${request.id}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error processing request:", error);
