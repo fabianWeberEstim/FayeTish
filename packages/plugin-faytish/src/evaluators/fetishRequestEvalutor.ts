@@ -32,7 +32,7 @@ Look for requests that:
 
 Based on the following request, is it related to feet style or appearance? YES or NO
 
-{{request}}
+{{content.text}}
 
 Is the request related to feet style or appearance? ` + booleanFooter;
 
@@ -60,23 +60,11 @@ async function validateRequest(
     const runtimeWithTwitter = runtime as RuntimeWithTwitter;
     const requestMatch = text.toLowerCase().match(/^request:\s*(.+)/i);
     if (!requestMatch) return false;
-
     const requestText = requestMatch[1].trim();
 
     const context = composeContext({
         template: requestValidationTemplate,
-        state: {
-            ...state,
-            requestText,
-            bio: "A bot that handles fetish requests related to feet style and appearance.",
-            lore: "This bot is designed to manage and validate requests related to feet style and appearance.",
-            messageDirections:
-                "Please ensure your request is clear and related to feet style or appearance.",
-            postDirections:
-                "Post your request starting with 'request:' followed by your detailed description.",
-            knowledge:
-                "This bot specializes in handling requests related to feet style, appearance, and related topics.",
-        },
+        state,
     });
 
     const isStyleRelated = await generateTrueOrFalse({
