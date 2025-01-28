@@ -32,7 +32,7 @@ Look for requests that:
 
 Based on the following request, is it related to feet style or appearance? YES or NO
 
-{{content.text}}
+{{request}}
 
 Is the request related to feet style or appearance? ` + booleanFooter;
 
@@ -54,25 +54,44 @@ interface TwitterDMContent {
 async function validateRequest(
     runtime: IAgentRuntime,
     text: string,
-    conversationId: string,
-    state: any
+    conversationId: string
 ): Promise<boolean> {
     const runtimeWithTwitter = runtime as RuntimeWithTwitter;
     const requestMatch = text.toLowerCase().match(/^request:\s*(.+)/i);
     if (!requestMatch) return false;
+    const styleKeywords = [
+        "style",
+        "appearance",
+        "look",
+        "design",
+        "polish",
+        "color",
+        "shape",
+        "nails",
+        "toes",
+        "pedicure",
+        "art",
+        "decoration",
+        "shoes",
+        "socks",
+        "sneakers",
+        "boots",
+        "sandals",
+        "heels",
+        "footwear",
+        "footwear style",
+        "footwear design",
+        "footwear polish",
+        "footwear color",
+        "footwear shape",
+        "footwear size",
+        "footwear brand",
+        "footwear shape",
+    ];
     const requestText = requestMatch[1].trim();
-
-    const context = composeContext({
-        template: requestValidationTemplate,
-        state,
-    });
-
-    const isStyleRelated = await generateTrueOrFalse({
-        context,
-        modelClass: ModelClass.SMALL,
-        runtime,
-    });
-
+    const isStyleRelated = styleKeywords.some((keyword) =>
+        requestText.includes(keyword)
+    );
     if (!isStyleRelated) {
         await runtimeWithTwitter.twitterClient.sendDirectMessage(
             conversationId,
@@ -99,14 +118,12 @@ export const fetishRequestEvaluator: Evaluator = {
     ): Promise<boolean> => {
         try {
             const extendedMessage = message as Memory;
-            const state = await runtime.composeState(message);
             return (
                 extendedMessage.content.isDM &&
                 validateRequest(
                     runtime,
                     message.content.text,
-                    message.conversationId,
-                    state
+                    message.conversationId
                 )
             );
         } catch (error) {
