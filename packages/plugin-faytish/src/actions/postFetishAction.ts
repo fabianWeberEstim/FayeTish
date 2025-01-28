@@ -8,6 +8,7 @@ import {
     type Action,
 } from "@elizaos/core";
 import { FetishRequest } from "../types";
+import { TwitterPostClient } from "../clients/TwitterPostClient";
 
 export const postFetishAction: Action = {
     name: "POST_FETISH_REQUEST",
@@ -41,9 +42,12 @@ export const postFetishAction: Action = {
             ) {
                 const request = requests.find((req) => !req.postId);
                 if (request) {
-                    const postResult = await runtime.plugins.twitter.postTweet(
+                    // استفاده از TwitterPostClient برای ارسال توییت
+                    const twitterClient = new TwitterPostClient(runtime);
+                    const postResult = await twitterClient.postTweet(
                         request.request
                     );
+
                     request.postId = postResult.id;
                     request.timestamp = Date.now();
                     await runtime.cacheManager.set(
@@ -58,9 +62,12 @@ export const postFetishAction: Action = {
             else if (!lastPostedRequest) {
                 const request = requests.find((req) => !req.postId);
                 if (request) {
-                    const postResult = await runtime.plugins.twitter.postTweet(
+                    // استفاده از TwitterPostClient برای ارسال توییت
+                    const twitterClient = new TwitterPostClient(runtime);
+                    const postResult = await twitterClient.postTweet(
                         request.request
                     );
+
                     request.postId = postResult.id;
                     request.timestamp = Date.now();
                     await runtime.cacheManager.set(
