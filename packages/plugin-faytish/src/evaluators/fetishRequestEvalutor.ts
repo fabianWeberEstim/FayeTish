@@ -54,7 +54,8 @@ interface TwitterDMContent {
 async function validateRequest(
     runtime: IAgentRuntime,
     text: string,
-    conversationId: string
+    conversationId: string,
+    state: any
 ): Promise<boolean> {
     const runtimeWithTwitter = runtime as RuntimeWithTwitter;
     const requestMatch = text.toLowerCase().match(/^request:\s*(.+)/i);
@@ -64,9 +65,8 @@ async function validateRequest(
 
     const context = composeContext({
         template: requestValidationTemplate,
-        state: {
-            request: requestText,
-        },
+        ...state,
+        requestText,
     });
 
     const isStyleRelated = await generateTrueOrFalse({
@@ -101,12 +101,14 @@ export const fetishRequestEvaluator: Evaluator = {
     ): Promise<boolean> => {
         try {
             const extendedMessage = message as Memory;
+            const state = await runtime.composeState(message);
             return (
                 extendedMessage.content.isDM &&
                 validateRequest(
                     runtime,
                     message.content.text,
-                    message.conversationId
+                    message.conversationId,
+                    state
                 )
             );
         } catch (error) {
